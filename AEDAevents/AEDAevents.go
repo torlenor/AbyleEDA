@@ -2,6 +2,8 @@ package AEDAevents
 
 import (
 	"github.com/op/go-logging"
+	"github.com/torlenor/AbyleEDA/AEDAserver"
+	"time"
 )
 
 var log = logging.MustGetLogger("AEDAlogger")
@@ -20,13 +22,53 @@ type EventMessage struct {
 	Unit     string
 }
 
+type Sensor struct {
+	Id          int32
+	SensorType  string
+	Quantity    string
+	Value       float64
+	Unit        string
+	LastUpdated time.Time
+}
+
+var M map[int32]Sensor
+
+func init() {
+	M = make(map[int32]Sensor)
+}
+
+var myServer *AEDAserver.UDPServer
+
+func SetAEDAserver(srv *AEDAserver.UDPServer) {
+	myServer = srv
+}
+
 func eventValueUpdate(event EventMessage) {
-	log.Info("Received valueupdate event:")
-	log.Info("Id =", event.Id)
-	log.Info("Type =", event.Type)
-	log.Info("Event =", event.Event)
-	log.Info("Quantity =", event.Quantity)
-	log.Info("Value =", event.Value, event.Unit)
+	if _, ok := M[event.Id]; ok {
+		log.Info("Received sensor update:")
+		log.Info("Id =", event.Id)
+		log.Info("Type =", event.Type)
+		log.Info("Event =", event.Event)
+		log.Info("Quantity =", event.Quantity)
+		log.Info("Value =", event.Value, event.Unit)
+		M[event.Id] = Sensor{Id: event.Id,
+			SensorType: "temperature",
+			Quantity:   "temperature",
+			Value:      event.Value,
+			Unit:       "event.Unit"}
+	} else {
+		log.Info("Registering new sensor:")
+		log.Info("Id =", event.Id)
+		log.Info("Type =", event.Type)
+		log.Info("Event =", event.Event)
+		log.Info("Quantity =", event.Quantity)
+		log.Info("Value =", event.Value, event.Unit)
+		M[event.Id] = Sensor{Id: event.Id,
+			SensorType: "temperature",
+			Quantity:   "temperature",
+			Value:      event.Value,
+			Unit:       "event.Unit"}
+	}
 }
 
 func eventTrigger(event EventMessage) {

@@ -7,8 +7,11 @@ import (
 	"github.com/op/go-logging"
 	"github.com/torlenor/AbyleEDA/AEDAevents"
 	"github.com/torlenor/AbyleEDA/AEDAserver"
+	"html/template"
+	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 )
 
@@ -96,6 +99,36 @@ func prepLogging() {
 	logging.SetBackend(backend1Formatter)
 }
 
+type Page struct {
+	Title string
+	Body  []byte
+}
+
+func viewHandler(w http.ResponseWriter, r *http.Request) {
+	p := Page{Title: "Hello world"}
+	t, _ := template.ParseFiles("sensor.html")
+	t.Execute(w, p)
+}
+
+func webShowSensors(w http.ResponseWriter, r *http.Request) {
+	for k, v := range r.Form {
+		fmt.Println("key:", k)
+		fmt.Println("val:", strings.Join(v, ""))
+	}
+	fmt.Fprintf(w, "Sensors:\n") // send data to client side
+	for k, v := range AEDAevents.M {
+		fmt.Fprintf(w, "Sensor ID: %d\n", k)      // send data to client side
+		fmt.Fprintf(w, "Value = %.2f\n", v.Value) // send data to client side
+	}
+}
+
+func startWebServer() {
+	// Setup simple web server
+	log.Info("Starting web server on port 100080")
+	http.HandleFunc("/", viewHandler)     // set router
+	go http.ListenAndServe(":10080", nil) // set listen port
+}
+
 func main() {
 	// Prepare logging with go-logging
 	prepLogging()
@@ -112,6 +145,9 @@ func main() {
 	// Prepare interupt handling
 	initInterruptHandling(srv)
 
+	// Start web server
+	startWebServer()
+
 	if cfg.debugMode {
 		log.Debug("Debug mode on")
 		srv.DebugMode = true
@@ -123,6 +159,10 @@ func main() {
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
+
+	// Server has to be set in AEDAevents to make it possible
+	// to send messages to clients in event system
+	AEDAevents.SetAEDAserver(srv)
 
 	for {
 		select {
