@@ -11,25 +11,25 @@ import (
 
 var log = logging.MustGetLogger("example")
 
-type cryptcfg struct {
-	key   []byte
-	nonce []byte
+type CryptCfg struct {
+	Key   []byte
+	Nonce []byte
 }
 
-var ccfg cryptcfg
+var ccfg CryptCfg
 
 func init() {
 	// TODO: IMPLEMENT SOME KIND OF AUTHENTICATION FOR NONCE AND MAKE KEY CONFIGURABLE
 	// The key argument should be the AES key, either 16 or 32 bytes
 	// to select AES-128 or AES-256.
-	ccfg.key = []byte("AES256Key-32Characters1234567890")
-	ccfg.nonce, _ = hex.DecodeString("bb8ef84243d2ee95a41c6c57")
+	ccfg.Key = []byte("AES256Key-32Characters1234567890")
+	ccfg.Nonce, _ = hex.DecodeString("bb8ef84243d2ee95a41c6c57")
 }
 
-func Encrypter(encmsg []byte) []byte {
+func Encrypter(encmsg []byte, ccfg CryptCfg) []byte {
 	plaintext := encmsg
 
-	block, err := aes.NewCipher(ccfg.key)
+	block, err := aes.NewCipher(ccfg.Key)
 	if err != nil {
 		panic(err.Error())
 	}
@@ -39,13 +39,13 @@ func Encrypter(encmsg []byte) []byte {
 		panic(err.Error())
 	}
 
-	ciphertext := aesgcm.Seal(nil, ccfg.nonce, plaintext, nil)
+	ciphertext := aesgcm.Seal(nil, ccfg.Nonce, plaintext, nil)
 
 	return ciphertext
 }
 
 func Decrypter(cryptmsg []byte) ([]byte, error) {
-	block, err := aes.NewCipher(ccfg.key)
+	block, err := aes.NewCipher(ccfg.Key)
 	if err != nil {
 		log.Error(err.Error())
 		return nil, err
@@ -57,7 +57,7 @@ func Decrypter(cryptmsg []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	plaintext, err := aesgcm.Open(nil, ccfg.nonce, cryptmsg, nil)
+	plaintext, err := aesgcm.Open(nil, ccfg.Nonce, cryptmsg, nil)
 	if err != nil {
 		log.Error(err.Error())
 		return nil, err
