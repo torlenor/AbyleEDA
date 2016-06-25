@@ -44,7 +44,7 @@ func Encrypter(encmsg []byte, ccfg CryptCfg) []byte {
 	return ciphertext
 }
 
-func Decrypter(cryptmsg []byte) ([]byte, error) {
+func Decrypter(cryptmsg []byte, ccfg CryptCfg) ([]byte, error) {
 	block, err := aes.NewCipher(ccfg.Key)
 	if err != nil {
 		log.Error(err.Error())

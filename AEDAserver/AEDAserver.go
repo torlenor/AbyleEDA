@@ -1,6 +1,7 @@
 package AEDAserver
 
 import (
+	"encoding/hex"
 	"errors"
 	"github.com/op/go-logging"
 	"github.com/torlenor/AbyleEDA/AEDAcrypt"
@@ -24,7 +25,7 @@ func ParseUDPMessage(srv *UDPServer, addr *net.UDPAddr, buf []byte) {
 	}
 
 	msgmd5 := AEDAcrypt.GetMD5HashFromString(string(buf))
-	msg, err := AEDAcrypt.Decrypter(buf)
+	msg, err := AEDAcrypt.Decrypter(buf, srv.ccfg)
 
 	if err != nil {
 		SendUDPmsg(*srv, addr, rcvFAIL)
@@ -76,9 +77,21 @@ type UDPServer struct {
 	packetQueue chan UDPPacket
 
 	ResQueue chan ClientMessage
+
+	ccfg AEDAcrypt.CryptCfg
 }
 
 var MAX_QUEUE int = 12
+
+// TODO REPLACE WITH SOMETHING USEFUL AND CLIENT BASED
+func getCryptKey() AEDAcrypt.CryptCfg {
+	// TODO: Do an authentication
+	nonce, _ := hex.DecodeString("bb8ef84243d2ee95a41c6c57")
+
+	ccfg := AEDAcrypt.CryptCfg{Key: []byte("AES256Key-32Characters1234567890"),
+		Nonce: nonce}
+	return ccfg
+}
 
 func init() {
 	// do nothing yet
@@ -118,6 +131,7 @@ func CreateUDPServer(port int) (*UDPServer, error) {
 	srv.Addr = ServerAddr
 	srv.packetQueue = make(chan UDPPacket, MAX_QUEUE)
 	srv.ResQueue = make(chan ClientMessage, MAX_QUEUE)
+	srv.ccfg = getCryptKey()
 
 	return srv, nil
 }
