@@ -3,20 +3,21 @@ package AEDAserver
 import (
 	"encoding/hex"
 	"errors"
-	"github.com/op/go-logging"
-	"github.com/torlenor/AbyleEDA/AEDAcrypt"
 	"net"
 	"strconv"
+
+	"github.com/op/go-logging"
+	"github.com/torlenor/AbyleEDA/AEDAcrypt"
 )
 
 // Simple OK/NOTOK for the client
-var rcvOK []byte = []byte("0")
-var rcvFAIL []byte = []byte("1")
+var rcvOK = []byte("0")
+var rcvFAIL = []byte("1")
 
 var log = logging.MustGetLogger("AEDAlogger")
 
 func ParseUDPMessage(srv *UDPServer, addr *net.UDPAddr, buf []byte) {
-	srv.Stats.Pktsrecvcnt += 1
+	srv.Stats.Pktsrecvcnt++
 
 	if string(buf) == "1001" {
 		AddNewClient(srv, addr)
@@ -29,7 +30,7 @@ func ParseUDPMessage(srv *UDPServer, addr *net.UDPAddr, buf []byte) {
 
 	if err != nil {
 		SendUDPmsg(*srv, addr, rcvFAIL)
-		srv.Stats.Pktserrcnt += 1
+		srv.Stats.Pktserrcnt++
 		return
 	}
 
@@ -106,7 +107,7 @@ func CheckError(err error) {
 func SendUDPmsg(srv UDPServer, addr *net.UDPAddr, msg []byte) {
 	_, err := srv.Conn.WriteToUDP(msg, addr)
 	CheckError(err)
-	srv.Stats.Pktssentcnt += 1
+	srv.Stats.Pktssentcnt++
 }
 
 func AddNewClient(srv *UDPServer, addr *net.UDPAddr) {
@@ -163,7 +164,6 @@ func Start(srv *UDPServer) error {
 
 			srv.packetQueue <- UDPPacket{Addr: addr, Buf: rcvmsg}
 		}
-		return nil
 	}
 
 	return errors.New("Server already running")

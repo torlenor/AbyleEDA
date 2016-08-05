@@ -4,16 +4,16 @@ import (
 	"bufio"
 	"encoding/hex"
 	"fmt"
-	"github.com/op/go-logging"
-	"github.com/torlenor/AbyleEDA/AEDAcrypt"
 	"net"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/op/go-logging"
+	"github.com/torlenor/AbyleEDA/AEDAcrypt"
 )
 
-// This is for go-logger
-var log = logging.MustGetLogger("example")
+var log = logging.MustGetLogger("AEDAlogger")
 
 var rcvOK []byte = []byte("0")
 var rcvFAIL []byte = []byte("1")

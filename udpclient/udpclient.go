@@ -3,14 +3,15 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"github.com/op/go-logging"
-	"github.com/torlenor/AbyleEDA/AEDAclient"
-	"github.com/torlenor/AbyleEDA/AEDAevents"
 	mrand "math/rand"
 	"net"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/op/go-logging"
+	"github.com/torlenor/AbyleEDA/AEDAclient"
+	"github.com/torlenor/AbyleEDA/AEDAevents"
 )
 
 // This is for go-logger
@@ -19,8 +20,8 @@ var format = logging.MustStringFormatter(
 	`%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.5s} %{color:reset} %{message}`,
 )
 
-var rcvOK []byte = []byte("0")
-var rcvFAIL []byte = []byte("1")
+var rcvOK = []byte("0")
+var rcvFAIL = []byte("1")
 
 func CheckError(err error) {
 	if err != nil {

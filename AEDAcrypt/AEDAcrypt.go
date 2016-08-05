@@ -5,8 +5,9 @@ import (
 	"crypto/cipher"
 	"crypto/md5"
 	"encoding/hex"
-	"github.com/op/go-logging"
 	"os"
+
+	"github.com/op/go-logging"
 )
 
 var log = logging.MustGetLogger("example")

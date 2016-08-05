@@ -4,15 +4,16 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/op/go-logging"
-	"github.com/torlenor/AbyleEDA/AEDAevents"
-	"github.com/torlenor/AbyleEDA/AEDAserver"
 	"html/template"
 	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 	"time"
+
+	"github.com/op/go-logging"
+	"github.com/torlenor/AbyleEDA/AEDAevents"
+	"github.com/torlenor/AbyleEDA/AEDAserver"
 )
 
 // This is for go-logger
