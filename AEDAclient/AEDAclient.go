@@ -15,10 +15,10 @@ import (
 
 var log = logging.MustGetLogger("AEDAlogger")
 
-var rcvOK []byte = []byte("0")
-var rcvFAIL []byte = []byte("1")
+var rcvOK = []byte("0")
+var rcvFAIL = []byte("1")
 
-func CheckError(err error) {
+func checkError(err error) {
 	if err != nil {
 		log.Error("Error: ", err)
 	}
@@ -41,7 +41,7 @@ func greetServer(Conn *net.UDPConn) error {
 	msg := string("1001")
 	buf := []byte(msg)
 	_, err := Conn.Write(buf)
-	CheckError(err)
+	checkError(err)
 	if err != nil {
 		log.Panic("Can't greet server!")
 		return err
@@ -52,7 +52,7 @@ func greetServer(Conn *net.UDPConn) error {
 	// Wait for the response
 	fmt.Println("Waiting for the response...")
 	_, err = bufio.NewReader(Conn).Read(p)
-	CheckError(err)
+	checkError(err)
 	if err != nil {
 		log.Panic("Can't connect to server!")
 		return err
@@ -76,7 +76,7 @@ func ConnectUDPClient(srvAddr *net.UDPAddr) (*UDPClient, error) {
 
 	// Define the server address and port
 	Conn, err := net.DialUDP("udp", nil, srvAddr)
-	CheckError(err)
+	checkError(err)
 	if err != nil {
 		log.Panic("Can't dial server!")
 		return nil, err
@@ -130,7 +130,7 @@ func SendMessageToServer(client *UDPClient, msg []byte) {
 			deadline := time.Now().Add(10 * time.Second)
 			client.Conn.SetReadDeadline(deadline)
 			n, _, err := client.Conn.ReadFromUDP(p)
-			CheckError(err)
+			checkError(err)
 			if err != nil {
 				c1 <- false
 				return

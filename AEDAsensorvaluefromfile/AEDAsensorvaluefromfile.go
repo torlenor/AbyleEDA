@@ -3,15 +3,16 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"github.com/op/go-logging"
-	"github.com/torlenor/AbyleEDA/AEDAclient"
-	"github.com/torlenor/AbyleEDA/AEDAevents"
 	"io/ioutil"
 	"net"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/op/go-logging"
+	"github.com/torlenor/AbyleEDA/AEDAclient"
+	"github.com/torlenor/AbyleEDA/AEDAevents"
 )
 
 // This is for go-logger
@@ -19,7 +20,7 @@ var log = logging.MustGetLogger("AEDAlogger")
 var format = logging.MustStringFormatter(
 	`%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.5s} %{color:reset} %{message}`)
 
-func CheckError(err error) {
+func checkError(err error) {
 	if err != nil {
 		log.Error("Error: ", err)
 	}
@@ -51,9 +52,9 @@ var srvPortPtr = flag.Int("port", 10001, "server port")
 
 func getServerAddress() *net.UDPAddr {
 	// Define the server address and port
-	var srvPort string = strconv.Itoa(*srvPortPtr)
+	var srvPort = strconv.Itoa(*srvPortPtr)
 	ServerAddr, err := net.ResolveUDPAddr("udp", *srvAddrPtr+":"+srvPort)
-	CheckError(err)
+	checkError(err)
 
 	return ServerAddr
 }
@@ -61,17 +62,18 @@ func getServerAddress() *net.UDPAddr {
 func main() {
 	prepLogging()
 
-	sensorFilePtr := flag.String("sensorfile", "/sys/class/hwmon/hwmon0/temp2_input", "senosr file in sys interface")
+	sensorIDPtr := flag.Int("sensorid", 1001, "sensor id")
+	sensorFilePtr := flag.String("sensorfile", "/sys/class/hwmon/hwmon0/temp2_input", "sensor file in sys interface")
 
 	flag.Parse()
 
 	client, err := AEDAclient.ConnectUDPClient(getServerAddress())
-	CheckError(err)
+	checkError(err)
 	defer AEDAclient.DisconnectUDPClient(client)
 
 	// Send JSON stuff
 	for {
-		event := AEDAevents.EventMessage{Id: 1001,
+		event := AEDAevents.EventMessage{Id: int32(*sensorIDPtr),
 			Value:    getSensorValue(*sensorFilePtr),
 			Type:     "sensor",
 			Event:    AEDAevents.EventValueUpdate,
@@ -79,7 +81,7 @@ func main() {
 			Unit:     "degC"}
 
 		msg, err := json.Marshal(event)
-		CheckError(err)
+		checkError(err)
 
 		AEDAclient.SendMessageToServer(client, msg)
 

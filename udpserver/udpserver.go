@@ -24,10 +24,10 @@ var format = logging.MustStringFormatter(
 var starttime = time.Now()
 
 // Simple OK/NOTOK for the client
-var rcvOK []byte = []byte("0")
-var rcvFAIL []byte = []byte("1")
+var rcvOK = []byte("0")
+var rcvFAIL = []byte("1")
 
-func CheckError(err error) {
+func checkError(err error) {
 	if err != nil {
 		log.Error(err.Error())
 		os.Exit(0)
@@ -67,12 +67,12 @@ func initStatsWrite(srv *AEDAserver.UDPServer) {
 	}()
 }
 
-type Config struct {
+type config struct {
 	debugMode bool
 	port      int
 }
 
-var cfg Config
+var cfg config
 
 func parseCmdLine() {
 	numbPtr := flag.Int("port", 10001, "server port to listen on")
@@ -84,29 +84,19 @@ func parseCmdLine() {
 	cfg.port = *numbPtr
 }
 
-type SrvStats struct {
-	pktssentcnt int
-	pktsrecvcnt int
-	pktserrcnt  int
-}
-
-var stats SrvStats
-
 func prepLogging() {
-	backend1 := logging.NewLogBackend(os.Stdout, "", 0)
-	// backend2, err := logging.NewSyslogBackend("AbyleEDA")
-	// CheckError(err)
-	backend1Formatter := logging.NewBackendFormatter(backend1, format)
-	logging.SetBackend(backend1Formatter)
+	backend := logging.NewLogBackend(os.Stdout, "", 0)
+	backendFormatter := logging.NewBackendFormatter(backend, format)
+	logging.SetBackend(backendFormatter)
 }
 
-type Page struct {
+type page struct {
 	Title string
 	Body  []byte
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request) {
-	p := Page{Title: "Hello world"}
+	p := page{Title: "Hello world"}
 	t, _ := template.ParseFiles("sensor.html")
 	t.Execute(w, p)
 }
@@ -125,8 +115,8 @@ func webShowSensors(w http.ResponseWriter, r *http.Request) {
 
 func startWebServer() {
 	// Setup simple web server
-	log.Info("Starting web server on port 100080")
-	http.HandleFunc("/", viewHandler)     // set router
+	log.Info("Starting web server on port 10080")
+	http.HandleFunc("/", webShowSensors)  // set router
 	go http.ListenAndServe(":10080", nil) // set listen port
 }
 
@@ -139,7 +129,7 @@ func main() {
 
 	// Create an AEDA UDP server
 	srv, err := AEDAserver.CreateUDPServer(cfg.port)
-	CheckError(err)
+	checkError(err)
 
 	initStatsWrite(srv)
 
@@ -191,5 +181,5 @@ func main() {
 		}
 	}
 
-	srv.Conn.Close()
+	// srv.Conn.Close()
 }

@@ -1,9 +1,10 @@
 package AEDAevents
 
 import (
+	"time"
+
 	"github.com/op/go-logging"
 	"github.com/torlenor/AbyleEDA/AEDAserver"
-	"time"
 )
 
 var log = logging.MustGetLogger("AEDAlogger")

@@ -23,19 +23,16 @@ var format = logging.MustStringFormatter(
 var rcvOK = []byte("0")
 var rcvFAIL = []byte("1")
 
-func CheckError(err error) {
+func checkError(err error) {
 	if err != nil {
 		log.Error("Error: ", err)
 	}
 }
 
 func prepLogging() {
-	backend2 := logging.NewLogBackend(os.Stdout, "", 0)
-	// backend3, _ := logging.NewSyslogBackend("AbyleEDA")
-
-	backend2Formatter := logging.NewBackendFormatter(backend2, format)
-
-	logging.SetBackend(backend2Formatter)
+	backend := logging.NewLogBackend(os.Stdout, "", 0)
+	backendFormatter := logging.NewBackendFormatter(backend, format)
+	logging.SetBackend(backendFormatter)
 }
 
 func main() {
@@ -51,12 +48,12 @@ func main() {
 	mrand.Seed(time.Now().UnixNano())
 
 	// Define the server address and port
-	var srvPort string = strconv.Itoa(*srvPortPtr)
+	var srvPort = strconv.Itoa(*srvPortPtr)
 	ServerAddr, err := net.ResolveUDPAddr("udp", *srvAddrPtr+":"+srvPort)
-	CheckError(err)
+	checkError(err)
 
 	client, err := AEDAclient.ConnectUDPClient(ServerAddr)
-	CheckError(err)
+	checkError(err)
 	defer AEDAclient.DisconnectUDPClient(client)
 
 	// Send JSON stuff
@@ -67,7 +64,7 @@ func main() {
 		} else {
 			eventEvent = 1
 		}
-		event := AEDAevents.EventMessage{Id: 1001,
+		event := AEDAevents.EventMessage{Id: 1002,
 			Value:    float64(mrand.Intn(250)) + mrand.Float64(),
 			Type:     "sensor",
 			Event:    eventEvent,

@@ -16,11 +16,11 @@ var rcvFAIL = []byte("1")
 
 var log = logging.MustGetLogger("AEDAlogger")
 
-func ParseUDPMessage(srv *UDPServer, addr *net.UDPAddr, buf []byte) {
+func parseUDPMessage(srv *UDPServer, addr *net.UDPAddr, buf []byte) {
 	srv.Stats.Pktsrecvcnt++
 
 	if string(buf) == "1001" {
-		AddNewClient(srv, addr)
+		addNewClient(srv, addr)
 		log.Info("Current clients:", srv.Clients)
 		return
 	}
@@ -82,7 +82,7 @@ type UDPServer struct {
 	ccfg AEDAcrypt.CryptCfg
 }
 
-var MAX_QUEUE int = 12
+var maxQueue int = 12
 
 // TODO REPLACE WITH SOMETHING USEFUL AND CLIENT BASED
 func getCryptKey() AEDAcrypt.CryptCfg {
@@ -98,7 +98,7 @@ func init() {
 	// do nothing yet
 }
 
-func CheckError(err error) {
+func checkError(err error) {
 	if err != nil {
 		log.Error("Error: ", err)
 	}
@@ -106,11 +106,11 @@ func CheckError(err error) {
 
 func SendUDPmsg(srv UDPServer, addr *net.UDPAddr, msg []byte) {
 	_, err := srv.Conn.WriteToUDP(msg, addr)
-	CheckError(err)
+	checkError(err)
 	srv.Stats.Pktssentcnt++
 }
 
-func AddNewClient(srv *UDPServer, addr *net.UDPAddr) {
+func addNewClient(srv *UDPServer, addr *net.UDPAddr) {
 	srv.Clients = appendClient(srv.Clients, *addr)
 	log.Info("New client (", addr, ") connected ... greeting it!")
 	SendUDPmsg(*srv, addr, []byte("From server: Hello I got your mesage "))
@@ -121,7 +121,7 @@ func CreateUDPServer(port int) (*UDPServer, error) {
 
 	var srvPort string = strconv.Itoa(port)
 	ServerAddr, err := net.ResolveUDPAddr("udp", ":"+srvPort)
-	CheckError(err)
+	checkError(err)
 
 	ServerConn, err := net.ListenUDP("udp", ServerAddr)
 	if err != nil {
@@ -130,18 +130,18 @@ func CreateUDPServer(port int) (*UDPServer, error) {
 
 	srv.Conn = ServerConn
 	srv.Addr = ServerAddr
-	srv.packetQueue = make(chan UDPPacket, MAX_QUEUE)
-	srv.ResQueue = make(chan ClientMessage, MAX_QUEUE)
+	srv.packetQueue = make(chan UDPPacket, maxQueue)
+	srv.ResQueue = make(chan ClientMessage, maxQueue)
 	srv.ccfg = getCryptKey()
 
 	return srv, nil
 }
 
-func StartWorker(srv *UDPServer) {
+func startWorker(srv *UDPServer) {
 	for {
 		select {
 		case pkt := <-srv.packetQueue:
-			go ParseUDPMessage(srv, pkt.Addr, pkt.Buf)
+			go parseUDPMessage(srv, pkt.Addr, pkt.Buf)
 		}
 	}
 }
@@ -151,7 +151,7 @@ func Start(srv *UDPServer) error {
 		buf := make([]byte, 64*1024) // until finding a better way, assume max of 64k packages
 
 		srv.isStarted = true
-		go StartWorker(srv)
+		go startWorker(srv)
 
 		for {
 			n, addr, err := srv.Conn.ReadFromUDP(buf)
