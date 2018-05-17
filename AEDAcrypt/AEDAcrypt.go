@@ -5,12 +5,11 @@ import (
 	"crypto/cipher"
 	"crypto/md5"
 	"encoding/hex"
-	"os"
 
 	"github.com/op/go-logging"
 )
 
-var log = logging.MustGetLogger("example")
+var log = logging.MustGetLogger("AEDAlogger")
 
 type CryptCfg struct {
 	Key   []byte
@@ -18,14 +17,6 @@ type CryptCfg struct {
 }
 
 var ccfg CryptCfg
-
-func init() {
-	// TODO: IMPLEMENT SOME KIND OF AUTHENTICATION FOR NONCE AND MAKE KEY CONFIGURABLE
-	// The key argument should be the AES key, either 16 or 32 bytes
-	// to select AES-128 or AES-256.
-	ccfg.Key = []byte("AES256Key-32Characters1234567890")
-	ccfg.Nonce, _ = hex.DecodeString("bb8ef84243d2ee95a41c6c57")
-}
 
 func Encrypter(encmsg []byte, ccfg CryptCfg) []byte {
 	plaintext := encmsg
@@ -67,21 +58,16 @@ func Decrypter(cryptmsg []byte, ccfg CryptCfg) ([]byte, error) {
 	return plaintext, nil
 }
 
-func CheckError(err error) {
-	if err != nil {
-		log.Error(err.Error())
-		os.Exit(0)
-	}
-}
-
 func GetMD5HashFromString(text string) string {
-	hasher := md5.New()
-	hasher.Write([]byte(text))
-	return hex.EncodeToString(hasher.Sum(nil))
+    return getMD5Hash([]byte(text))
 }
 
 func GetMD5HashFromByte(by []byte) string {
-	hasher := md5.New()
-	hasher.Write(by)
-	return hex.EncodeToString(hasher.Sum(nil))
+    return getMD5Hash(by)
+}
+
+func getMD5Hash(by []byte) string {
+    hasher := md5.New()
+    hasher.Write(by)
+    return hex.EncodeToString(hasher.Sum(nil))
 }
