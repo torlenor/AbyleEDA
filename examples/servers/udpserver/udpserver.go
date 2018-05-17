@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/op/go-logging"
+	"github.com/torlenor/AbyleEDA/AEDAcrypt"
 	"github.com/torlenor/AbyleEDA/AEDAevents"
 	"github.com/torlenor/AbyleEDA/AEDAserver"
-    "github.com/torlenor/AbyleEDA/AEDAcrypt"
 )
 
 // This is for go-logger
@@ -72,7 +72,7 @@ func initStatsWrite(srv *AEDAserver.UDPServer) {
 type config struct {
 	debugMode bool
 	port      int
-    ccfg      AEDAcrypt.CryptCfg
+	ccfg      AEDAcrypt.CryptCfg
 }
 
 var cfg config
@@ -85,8 +85,8 @@ func parseCmdLine() {
 
 	cfg.debugMode = *boolPtr
 	cfg.port = *numbPtr
-    
-    nonce, _ := hex.DecodeString("bb8ef84243d2ee95a41c6c57")
+
+	nonce, _ := hex.DecodeString("bb8ef84243d2ee95a41c6c57")
 	cfg.ccfg = AEDAcrypt.CryptCfg{Key: []byte("AES256Key-32Characters1234567890"),
 		Nonce: nonce}
 }
@@ -178,9 +178,7 @@ func main() {
 				log.Debug("------------------------------------------------------------")
 			}
 
-			if event.Id != 0 {
-				AEDAevents.EventInterpreter(event)
-			}
+			AEDAevents.EventInterpreter(event)
 
 		// or quit if os.Interrupt
 		case <-c:

@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/torlenor/AbyleEDA/quantities"
+
 	"github.com/op/go-logging"
 	"github.com/torlenor/AbyleEDA/AEDAclient"
 	"github.com/torlenor/AbyleEDA/AEDAevents"
@@ -72,16 +74,20 @@ func main() {
 	defer AEDAclient.DisconnectUDPClient(client)
 
 	// Send JSON stuff
-	for {            
-        val := getSensorValue(*sensorFilePtr)
-        valstr := strconv.FormatFloat(val, 'f', -1, 64)
-            
-        event := AEDAevents.EventMessage{Id: int32(*sensorIDPtr),
-    		Type:     "sensor",
-    	 	Event:    AEDAevents.EventValueUpdate,
-            Content: []AEDAevents.EventContent {
-                            AEDAevents.EventContent{ Quantity: "temperature", Value: valstr, Unit: "degC" },
-                            AEDAevents.EventContent{ Quantity: "temperature", Value: valstr, Unit: "degC" } } }
+	for {
+		val := getSensorValue(*sensorFilePtr)
+		// valstr := strconv.FormatFloat(val, 'f', -1, 64)
+
+		var t quantities.Temperature
+		t.FromFloat(val)
+
+		event := AEDAevents.EventMessage{Id: int32(*sensorIDPtr),
+			Type:       "sensor",
+			Event:      AEDAevents.EventValueUpdate,
+			Quantities: []quantities.Quantity{&t}}
+		// Content: []AEDAevents.EventContent{
+		// 	AEDAevents.EventContent{Quantity: "temperature", Value: valstr, Unit: "degC"},
+		// 	AEDAevents.EventContent{Quantity: "temperature", Value: valstr, Unit: "degC"}}}
 
 		msg, err := json.Marshal(event)
 		checkError(err)

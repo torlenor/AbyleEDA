@@ -12,6 +12,7 @@ import (
 	"github.com/op/go-logging"
 	"github.com/torlenor/AbyleEDA/AEDAclient"
 	"github.com/torlenor/AbyleEDA/AEDAevents"
+	"github.com/torlenor/AbyleEDA/quantities"
 )
 
 // This is for go-logger
@@ -65,17 +66,15 @@ func main() {
 			eventEvent = 1
 		}
 
-		val1 := float64(mrand.Intn(250)) + mrand.Float64()
-		val1str := strconv.FormatFloat(val1, 'f', -1, 64)
-		val2 := float64(mrand.Intn(250)) + mrand.Float64()
-		val2str := strconv.FormatFloat(val2, 'f', -1, 64)
+		var t1 quantities.Temperature
+		t1.FromFloat(float64(mrand.Intn(250)) + mrand.Float64())
+		var t2 quantities.Temperature
+		t2.FromFloat(float64(mrand.Intn(250)) + mrand.Float64())
 
 		event := AEDAevents.EventMessage{Id: 1002,
-			Type:  "sensor",
-			Event: eventEvent,
-			Content: []AEDAevents.EventContent{
-				AEDAevents.EventContent{Quantity: "temperature", Value: val1str, Unit: "degC"},
-				AEDAevents.EventContent{Quantity: "temperature", Value: val2str, Unit: "degC"}}}
+			Type:       "sensor",
+			Event:      eventEvent,
+			Quantities: []quantities.Quantity{&t1, &t2}}
 
 		msgng, _ := json.Marshal(event)
 
