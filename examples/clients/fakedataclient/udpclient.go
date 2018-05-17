@@ -64,17 +64,22 @@ func main() {
 		} else {
 			eventEvent = 1
 		}
-		event := AEDAevents.EventMessage{Id: 1002,
-			Value:    float64(mrand.Intn(250)) + mrand.Float64(),
+        
+        val1 := float64(mrand.Intn(250)) + mrand.Float64();
+        val1str := strconv.FormatFloat(val1, 'f', -1, 64)
+        val2 := float64(mrand.Intn(250)) + mrand.Float64();
+        val2str := strconv.FormatFloat(val2, 'f', -1, 64)
+            
+        event := AEDAevents.EventMessage{Id: 1002,
 			Type:     "sensor",
-			Event:    eventEvent,
-			Quantity: "temperature",
-			Unit:     "degC"}
-		jsonMapA, _ := json.Marshal(event)
+		 	Event:    eventEvent,
+            Content: []AEDAevents.EventContent {
+                            AEDAevents.EventContent{ Quantity: "temperature", Value: val1str, Unit: "degC" },
+                            AEDAevents.EventContent{ Quantity: "temperature", Value: val2str, Unit: "degC" } } }
+        
+        msgng, _ := json.Marshal(event)
 
-		msg := jsonMapA
-
-		AEDAclient.SendMessageToServer(client, msg)
+        AEDAclient.SendMessageToServer(client, msgng)
 
 		time.Sleep(time.Second * 1)
 	}

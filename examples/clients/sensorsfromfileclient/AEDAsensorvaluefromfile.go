@@ -72,13 +72,16 @@ func main() {
 	defer AEDAclient.DisconnectUDPClient(client)
 
 	// Send JSON stuff
-	for {
-		event := AEDAevents.EventMessage{Id: int32(*sensorIDPtr),
-			Value:    getSensorValue(*sensorFilePtr),
-			Type:     "sensor",
-			Event:    AEDAevents.EventValueUpdate,
-			Quantity: "temperature",
-			Unit:     "degC"}
+	for {            
+        val := getSensorValue(*sensorFilePtr)
+        valstr := strconv.FormatFloat(val, 'f', -1, 64)
+            
+        event := AEDAevents.EventMessage{Id: int32(*sensorIDPtr),
+    		Type:     "sensor",
+    	 	Event:    AEDAevents.EventValueUpdate,
+            Content: []AEDAevents.EventContent {
+                            AEDAevents.EventContent{ Quantity: "temperature", Value: valstr, Unit: "degC" },
+                            AEDAevents.EventContent{ Quantity: "temperature", Value: valstr, Unit: "degC" } } }
 
 		msg, err := json.Marshal(event)
 		checkError(err)
