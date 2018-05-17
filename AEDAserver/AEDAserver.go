@@ -18,13 +18,13 @@ var maxQueue int = 12
 var log = logging.MustGetLogger("AEDAlogger")
 
 type ServerWriter interface {
-    Write(addr *net.UDPAddr, msg []byte)
+	Write(addr *net.UDPAddr, msg []byte)
 }
 
 type Server interface {
-    Start()
-    Close()
-    ServerWriter
+	Start()
+	Close()
+	ServerWriter
 }
 
 func parseUDPMessage(srv *UDPServer, addr *net.UDPAddr, buf []byte) {
@@ -93,9 +93,10 @@ type UDPServer struct {
 	ccfg AEDAcrypt.CryptCfg
 }
 
+// Start starts receiving UDP packages for the server
 func (srv *UDPServer) Start() error {
 	if srv.isStarted == false {
-		buf := make([]byte, 64*1024) // until finding a better way, assume max of 64k packages
+		buf := make([]byte, 64*1024) // theoretical max of UDP package
 
 		srv.isStarted = true
 		go srv.startWorker()
@@ -116,12 +117,13 @@ func (srv *UDPServer) Start() error {
 	return errors.New("Server already running")
 }
 
+// Close closes the server and no more packages are read from UDP
 func (srv *UDPServer) Close() {
-    srv.Conn.Close()
+	srv.Conn.Close()
 }
 
 func (srv *UDPServer) Write(addr *net.UDPAddr, msg []byte) {
-    _, err := srv.Conn.WriteToUDP(msg, addr)
+	_, err := srv.Conn.WriteToUDP(msg, addr)
 	checkError(err)
 	srv.Stats.Pktssentcnt++
 }
@@ -147,6 +149,7 @@ func addNewClient(srv *UDPServer, addr *net.UDPAddr) {
 	srv.Write(addr, []byte("From server: Hello I got your mesage "))
 }
 
+// CreateUDPServer returns a new UDP server with the provided parameters
 func CreateUDPServer(port int, ccfg AEDAcrypt.CryptCfg) (*UDPServer, error) {
 	srv := &UDPServer{}
 

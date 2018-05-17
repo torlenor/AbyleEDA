@@ -24,6 +24,7 @@ func checkError(err error) {
 	}
 }
 
+// The UDPClient struct holds the udp client of AEDAclient
 type UDPClient struct {
 	DebugMode   bool
 	isConnected bool
@@ -71,6 +72,7 @@ func authenticateClient(Conn *net.UDPConn) (AEDAcrypt.CryptCfg, error) {
 	return ccfg, nil
 }
 
+// ConnectUDPClient function connects a client to a server
 func ConnectUDPClient(srvAddr *net.UDPAddr) (*UDPClient, error) {
 	client := &UDPClient{}
 
@@ -99,10 +101,12 @@ func ConnectUDPClient(srvAddr *net.UDPAddr) (*UDPClient, error) {
 	return client, nil
 }
 
+// DisconnectUDPClient disconnects a client from its server
 func DisconnectUDPClient(client *UDPClient) {
 	client.Conn.Close()
 }
 
+// SendMessageToServer sends a message to the connected server
 func SendMessageToServer(client *UDPClient, msg []byte) {
 	// Encrypt the message
 	encmsg := AEDAcrypt.Encrypter(msg, client.ccfg)
