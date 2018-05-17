@@ -1,7 +1,6 @@
 package AEDAserver
 
 import (
-	"encoding/hex"
 	"errors"
 	"net"
 	"strconv"
@@ -14,7 +13,19 @@ import (
 var rcvOK = []byte("0")
 var rcvFAIL = []byte("1")
 
+var maxQueue int = 12
+
 var log = logging.MustGetLogger("AEDAlogger")
+
+type ServerWriter interface {
+    Write(addr *net.UDPAddr, msg []byte)
+}
+
+type Server interface {
+    Start()
+    Close()
+    ServerWriter
+}
 
 func parseUDPMessage(srv *UDPServer, addr *net.UDPAddr, buf []byte) {
 	srv.Stats.Pktsrecvcnt++
@@ -29,13 +40,13 @@ func parseUDPMessage(srv *UDPServer, addr *net.UDPAddr, buf []byte) {
 	msg, err := AEDAcrypt.Decrypter(buf, srv.ccfg)
 
 	if err != nil {
-		SendUDPmsg(*srv, addr, rcvFAIL)
+		srv.Write(addr, rcvFAIL)
 		srv.Stats.Pktserrcnt++
 		return
 	}
 
 	srv.ResQueue <- ClientMessage{Addr: addr, Msg: msg}
-	SendUDPmsg(*srv, addr, []byte(msgmd5))
+	srv.Write(addr, []byte(msgmd5))
 }
 
 func appendClient(slice []net.UDPAddr, addr net.UDPAddr) []net.UDPAddr {
@@ -82,76 +93,12 @@ type UDPServer struct {
 	ccfg AEDAcrypt.CryptCfg
 }
 
-var maxQueue int = 12
-
-// TODO REPLACE WITH SOMETHING USEFUL AND CLIENT BASED
-func getCryptKey() AEDAcrypt.CryptCfg {
-	// TODO: Do an authentication
-	nonce, _ := hex.DecodeString("bb8ef84243d2ee95a41c6c57")
-
-	ccfg := AEDAcrypt.CryptCfg{Key: []byte("AES256Key-32Characters1234567890"),
-		Nonce: nonce}
-	return ccfg
-}
-
-func init() {
-	// do nothing yet
-}
-
-func checkError(err error) {
-	if err != nil {
-		log.Error("Error: ", err)
-	}
-}
-
-func SendUDPmsg(srv UDPServer, addr *net.UDPAddr, msg []byte) {
-	_, err := srv.Conn.WriteToUDP(msg, addr)
-	checkError(err)
-	srv.Stats.Pktssentcnt++
-}
-
-func addNewClient(srv *UDPServer, addr *net.UDPAddr) {
-	srv.Clients = appendClient(srv.Clients, *addr)
-	log.Info("New client (", addr, ") connected ... greeting it!")
-	SendUDPmsg(*srv, addr, []byte("From server: Hello I got your mesage "))
-}
-
-func CreateUDPServer(port int) (*UDPServer, error) {
-	srv := &UDPServer{}
-
-	var srvPort string = strconv.Itoa(port)
-	ServerAddr, err := net.ResolveUDPAddr("udp", ":"+srvPort)
-	checkError(err)
-
-	ServerConn, err := net.ListenUDP("udp", ServerAddr)
-	if err != nil {
-		return nil, err
-	}
-
-	srv.Conn = ServerConn
-	srv.Addr = ServerAddr
-	srv.packetQueue = make(chan UDPPacket, maxQueue)
-	srv.ResQueue = make(chan ClientMessage, maxQueue)
-	srv.ccfg = getCryptKey()
-
-	return srv, nil
-}
-
-func startWorker(srv *UDPServer) {
-	for {
-		select {
-		case pkt := <-srv.packetQueue:
-			go parseUDPMessage(srv, pkt.Addr, pkt.Buf)
-		}
-	}
-}
-
-func Start(srv *UDPServer) error {
+func (srv *UDPServer) Start() error {
 	if srv.isStarted == false {
 		buf := make([]byte, 64*1024) // until finding a better way, assume max of 64k packages
 
 		srv.isStarted = true
-		go startWorker(srv)
+		go srv.startWorker()
 
 		for {
 			n, addr, err := srv.Conn.ReadFromUDP(buf)
@@ -167,4 +114,56 @@ func Start(srv *UDPServer) error {
 	}
 
 	return errors.New("Server already running")
+}
+
+func (srv *UDPServer) Close() {
+    srv.Conn.Close()
+}
+
+func (srv *UDPServer) Write(addr *net.UDPAddr, msg []byte) {
+    _, err := srv.Conn.WriteToUDP(msg, addr)
+	checkError(err)
+	srv.Stats.Pktssentcnt++
+}
+
+func (srv *UDPServer) startWorker() {
+	for {
+		select {
+		case pkt := <-srv.packetQueue:
+			go parseUDPMessage(srv, pkt.Addr, pkt.Buf)
+		}
+	}
+}
+
+func checkError(err error) {
+	if err != nil {
+		log.Error("Error: ", err)
+	}
+}
+
+func addNewClient(srv *UDPServer, addr *net.UDPAddr) {
+	srv.Clients = appendClient(srv.Clients, *addr)
+	log.Info("New client (", addr, ") connected ... greeting it!")
+	srv.Write(addr, []byte("From server: Hello I got your mesage "))
+}
+
+func CreateUDPServer(port int, ccfg AEDAcrypt.CryptCfg) (*UDPServer, error) {
+	srv := &UDPServer{}
+
+	var srvPort string = strconv.Itoa(port)
+	ServerAddr, err := net.ResolveUDPAddr("udp", ":"+srvPort)
+	checkError(err)
+
+	ServerConn, err := net.ListenUDP("udp", ServerAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	srv.Conn = ServerConn
+	srv.Addr = ServerAddr
+	srv.packetQueue = make(chan UDPPacket, maxQueue)
+	srv.ResQueue = make(chan ClientMessage, maxQueue)
+	srv.ccfg = ccfg
+
+	return srv, nil
 }

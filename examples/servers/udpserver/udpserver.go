@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 	"github.com/op/go-logging"
 	"github.com/torlenor/AbyleEDA/AEDAevents"
 	"github.com/torlenor/AbyleEDA/AEDAserver"
+    "github.com/torlenor/AbyleEDA/AEDAcrypt"
 )
 
 // This is for go-logger
@@ -70,6 +72,7 @@ func initStatsWrite(srv *AEDAserver.UDPServer) {
 type config struct {
 	debugMode bool
 	port      int
+    ccfg      AEDAcrypt.CryptCfg
 }
 
 var cfg config
@@ -82,6 +85,10 @@ func parseCmdLine() {
 
 	cfg.debugMode = *boolPtr
 	cfg.port = *numbPtr
+    
+    nonce, _ := hex.DecodeString("bb8ef84243d2ee95a41c6c57")
+	cfg.ccfg = AEDAcrypt.CryptCfg{Key: []byte("AES256Key-32Characters1234567890"),
+		Nonce: nonce}
 }
 
 func prepLogging() {
@@ -128,7 +135,7 @@ func main() {
 	parseCmdLine()
 
 	// Create an AEDA UDP server
-	srv, err := AEDAserver.CreateUDPServer(cfg.port)
+	srv, err := AEDAserver.CreateUDPServer(cfg.port, cfg.ccfg)
 	checkError(err)
 
 	initStatsWrite(srv)
@@ -146,7 +153,7 @@ func main() {
 
 	log.Info("AbyleEDA server prepared on", srv.Addr)
 	log.Info("Starting to listen...")
-	go AEDAserver.Start(srv) // start the server in an own thread
+	go srv.Start() // start the server in an own thread
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -181,5 +188,5 @@ func main() {
 		}
 	}
 
-	// srv.Conn.Close()
+	srv.Close()
 }

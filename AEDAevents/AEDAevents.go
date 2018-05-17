@@ -42,10 +42,10 @@ func init() {
 	M = make(map[int32]Sensor)
 }
 
-var myServer *AEDAserver.UDPServer
+var myWriter AEDAserver.ServerWriter
 
-func SetAEDAserver(srv *AEDAserver.UDPServer) {
-	myServer = srv
+func SetAEDAserver(serverWriter AEDAserver.ServerWriter) {
+    myWriter = serverWriter
 }
 
 func eventValueUpdate(event EventMessage) {
