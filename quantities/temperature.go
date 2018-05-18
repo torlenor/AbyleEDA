@@ -5,18 +5,9 @@ import (
 	"strconv"
 )
 
-// Temperature Unit definition
-const ( // iota is reset to 0
-	Unknown    = iota // = 0
-	DegreeC    = iota // = 1
-	Fahrenheit = iota // = 2
-	Kelvin     = iota // = 3
-)
-
 // Temperature quantity
 type Temperature struct {
-	Val  float64
-	Unit uint
+	Val float64
 }
 
 func (t *Temperature) MarshalJSON() (b []byte, e error) {
@@ -42,6 +33,11 @@ func (t *Temperature) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
+// Type returns the type of the quantity
+func (t *Temperature) Type() string {
+	return "temperature"
+}
+
 // String returns the value as a string
 func (t *Temperature) String() string {
 	return strconv.FormatFloat(t.Val, 'f', -1, 64)
@@ -59,4 +55,24 @@ func (t *Temperature) FromString(valstr string) {
 // FromFloat stores the provided value inside t
 func (t *Temperature) FromFloat(val float64) {
 	t.Val = val
+}
+
+// Float returns the value as a float64
+func (t *Temperature) Float() float64 {
+	return t.Val
+}
+
+// Degrees returns the temperature value in degrees centigrate
+func (t *Temperature) Degrees() float64 {
+	return t.Val
+}
+
+// Fahrenheit returns the temperature value in fahrenheit
+func (t *Temperature) Fahrenheit() float64 {
+	return t.Val*1.8 + 32
+}
+
+// Kelvin returns the temperature value in kelvin
+func (t *Temperature) Kelvin() float64 {
+	return t.Val + 273.15
 }

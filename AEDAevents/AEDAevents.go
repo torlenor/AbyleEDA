@@ -129,6 +129,12 @@ func printEvent(event EventMessage) {
 	cnt := 0
 	for _, content := range event.Quantities {
 		cnt++
-		log.Info("Content", cnt, ": ", content.String())
+
+		switch v := content.(type) {
+		case *quantities.Temperature:
+			log.Info("Content (numeric)", cnt, ":", v.Degrees(), "°C")
+		default:
+			log.Info("Content", cnt, ":", content.String())
+		}
 	}
 }
