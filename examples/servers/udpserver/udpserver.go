@@ -120,7 +120,7 @@ func webShowSensors(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "<h2>Client ID: %d</h2>", clientID)
 		for sensorID, sensor := range sensors {
 			fmt.Fprintf(w, "\tSensor ID: %d<br>", sensorID)
-			fmt.Fprintf(w, "\tValue = %.2f<br>", sensor.Value)
+			fmt.Fprintf(w, "\tTemperature = %.2f %s<br>", sensor.Value, sensor.Unit)
 		}
 	}
 }
@@ -224,6 +224,8 @@ func main() {
 	// Register custom event callbacks
 	AEDAevents.AddCustomEvent(1001, 1, updateSensorValue)
 	AEDAevents.AddCustomEvent(1002, 1, updateSensorValue)
+	AEDAevents.AddCustomEvent(1005, 1, updateSensorValue)
+	AEDAevents.AddCustomEvent(1005, 2, updateSensorValue)
 
 	for {
 		select {
