@@ -13,18 +13,13 @@ import (
 
 var log = logging.MustGetLogger("AEDAlogger")
 
-const ( // iota is reset to 0
-	EventValueUpdate = iota // = 0
-	EventTrigger     = iota // = 1
-)
-
+// EventMessage contains the data of an event
 type EventMessage struct {
-	Id         int32
-	Type       string
-	Event      int32
-	Quantities []quantities.Quantity
+	ID         int32                 `json:"id"`
+	Quantities []quantities.Quantity `json:"quantities"`
 }
 
+// UnmarshalJSON is part of the json interface for EventMessage
 func (ce *EventMessage) UnmarshalJSON(b []byte) error {
 	var objMap map[string]*json.RawMessage
 	err := json.Unmarshal(b, &objMap)
@@ -32,29 +27,15 @@ func (ce *EventMessage) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	var eventId int32
-	err = json.Unmarshal(*objMap["Id"], &eventId)
+	var idval int32
+	err = json.Unmarshal(*objMap["id"], &idval)
 	if err != nil {
 		return err
 	}
-	ce.Id = eventId
-
-	var typevar string
-	err = json.Unmarshal(*objMap["Type"], &typevar)
-	if err != nil {
-		return err
-	}
-	ce.Type = typevar
-
-	var event int32
-	err = json.Unmarshal(*objMap["Event"], &event)
-	if err != nil {
-		return err
-	}
-	ce.Event = event
+	ce.ID = idval
 
 	var rawMessagesForEventMessage []*json.RawMessage
-	err = json.Unmarshal(*objMap["Quantities"], &rawMessagesForEventMessage)
+	err = json.Unmarshal(*objMap["quantities"], &rawMessagesForEventMessage)
 	if err != nil {
 		return err
 	}
@@ -76,15 +57,16 @@ func (ce *EventMessage) UnmarshalJSON(b []byte) error {
 			}
 			ce.Quantities[index] = &t
 		} else {
-			return errors.New("Unsupported type found!")
+			return errors.New("unsupported type found: " + m["type"])
 		}
 	}
 
 	return nil
 }
 
+// Sensor struct is used to store sensor data
 type Sensor struct {
-	Id          int32
+	ID          int32
 	SensorType  string
 	Quantity    string
 	Value       float64
@@ -92,6 +74,8 @@ type Sensor struct {
 	LastUpdated time.Time
 }
 
+// M temporarily stores Sensor data until we have a more sophisticated
+// system in place
 var M map[int32]Sensor
 
 func init() {
@@ -100,16 +84,18 @@ func init() {
 
 var myWriter AEDAserver.ServerWriter
 
+// SetAEDAserver defines the serverWriter to use for the event system in
+// case of sending a message back to the clients or to another server
 func SetAEDAserver(serverWriter AEDAserver.ServerWriter) {
 	myWriter = serverWriter
 }
 
 func eventValueUpdate(event EventMessage) {
-	if _, ok := M[event.Id]; ok {
+	if _, ok := M[event.ID]; ok {
 		log.Info("Received sensor update:")
 		printEvent(event)
 
-		// M[event.Id] = Sensor{Id: event.Id,
+		// M[event.ID] = Sensor{ID: event.ID,
 		// 	SensorType: "temperature",
 		// 	Quantity:   "temperature",
 		// 	Value:      event.Value,
@@ -118,7 +104,7 @@ func eventValueUpdate(event EventMessage) {
 		log.Info("Registering new sensor:")
 		printEvent(event)
 
-		// M[event.Id] = Sensor{Id: event.Id,
+		// M[event.ID] = Sensor{ID: event.ID,
 		// 	SensorType: "temperature",
 		// 	Quantity:   "temperature",
 		// 	Value:      event.Value,
@@ -131,22 +117,15 @@ func eventTrigger(event EventMessage) {
 	printEvent(event)
 }
 
+// EventInterpreter should be called when a new message comes in and
+// it will be the entry point to the event handling process
 func EventInterpreter(event EventMessage) {
-	switch event.Event {
-	case EventValueUpdate:
-		eventValueUpdate(event)
-	case EventTrigger:
-		eventTrigger(event)
-	default:
-		log.Info("Received unknown event:")
-		printEvent(event)
-	}
+	eventValueUpdate(event)
+	eventTrigger(event)
 }
 
 func printEvent(event EventMessage) {
-	log.Info("Id =", event.Id)
-	log.Info("Type =", event.Type)
-	log.Info("Event =", event.Event)
+	log.Info("ID =", event.ID)
 	cnt := 0
 	for _, content := range event.Quantities {
 		cnt++

@@ -59,21 +59,12 @@ func main() {
 
 	// Send JSON stuff
 	for {
-		var eventEvent int32
-		if mrand.Float64() > 0.5 {
-			eventEvent = 0
-		} else {
-			eventEvent = 1
-		}
-
 		var t1 quantities.Temperature
 		t1.FromFloat(float64(mrand.Intn(250)) + mrand.Float64())
 		var t2 quantities.Temperature
 		t2.FromFloat(float64(mrand.Intn(250)) + mrand.Float64())
 
-		event := AEDAevents.EventMessage{Id: 1002,
-			Type:       "sensor",
-			Event:      eventEvent,
+		event := AEDAevents.EventMessage{ID: 1002,
 			Quantities: []quantities.Quantity{&t1, &t2}}
 
 		msgng, _ := json.Marshal(event)

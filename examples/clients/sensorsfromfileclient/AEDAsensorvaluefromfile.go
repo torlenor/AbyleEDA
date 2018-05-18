@@ -76,18 +76,12 @@ func main() {
 	// Send JSON stuff
 	for {
 		val := getSensorValue(*sensorFilePtr)
-		// valstr := strconv.FormatFloat(val, 'f', -1, 64)
 
 		var t quantities.Temperature
 		t.FromFloat(val)
 
-		event := AEDAevents.EventMessage{Id: int32(*sensorIDPtr),
-			Type:       "sensor",
-			Event:      AEDAevents.EventValueUpdate,
+		event := AEDAevents.EventMessage{ID: int32(*sensorIDPtr),
 			Quantities: []quantities.Quantity{&t}}
-		// Content: []AEDAevents.EventContent{
-		// 	AEDAevents.EventContent{Quantity: "temperature", Value: valstr, Unit: "degC"},
-		// 	AEDAevents.EventContent{Quantity: "temperature", Value: valstr, Unit: "degC"}}}
 
 		msg, err := json.Marshal(event)
 		checkError(err)
