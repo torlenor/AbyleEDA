@@ -15,7 +15,8 @@ var log = logging.MustGetLogger("AEDAlogger")
 
 // EventMessage contains the data of an event
 type EventMessage struct {
-	ID         int32                 `json:"id"`
+	ClientID   int32                 `json:"clientid"`
+	EventID    int32                 `json:"eventid"`
 	Quantities []quantities.Quantity `json:"quantities"`
 }
 
@@ -27,20 +28,39 @@ func (ce *EventMessage) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	var idval int32
-	err = json.Unmarshal(*objMap["id"], &idval)
-	if err != nil {
-		return err
+	if value, found := objMap["clientid"]; found {
+		var clientidval int32
+		err = json.Unmarshal(*value, &clientidval)
+		if err != nil {
+			return err
+		}
+		ce.ClientID = clientidval
+	} else {
+		return errors.New("clientid does not exist in json data")
 	}
-	ce.ID = idval
+
+	if value, found := objMap["eventid"]; found {
+		var eventidval int32
+		err = json.Unmarshal(*value, &eventidval)
+		if err != nil {
+			return err
+		}
+		ce.EventID = eventidval
+	} else {
+		return errors.New("clientid does not exist in json data")
+	}
 
 	var rawMessagesForEventMessage []*json.RawMessage
-	err = json.Unmarshal(*objMap["quantities"], &rawMessagesForEventMessage)
-	if err != nil {
-		return err
-	}
 
-	ce.Quantities = make([]quantities.Quantity, len(rawMessagesForEventMessage))
+	if value, found := objMap["quantities"]; found {
+		err = json.Unmarshal(*value, &rawMessagesForEventMessage)
+		if err != nil {
+			return err
+		}
+		ce.Quantities = make([]quantities.Quantity, len(rawMessagesForEventMessage))
+	} else {
+		return errors.New("clientid does not exist in json data")
+	}
 
 	var m map[string]string
 	for index, rawMessage := range rawMessagesForEventMessage {
@@ -91,7 +111,7 @@ func SetAEDAserver(serverWriter AEDAserver.ServerWriter) {
 }
 
 func eventValueUpdate(event EventMessage) {
-	if _, ok := M[event.ID]; ok {
+	if _, ok := M[event.EventID]; ok {
 		log.Info("Received sensor update:")
 		printEvent(event)
 
@@ -125,7 +145,8 @@ func EventInterpreter(event EventMessage) {
 }
 
 func printEvent(event EventMessage) {
-	log.Info("ID =", event.ID)
+	log.Info("ClientID =", event.ClientID)
+	log.Info("EventID =", event.EventID)
 	cnt := 0
 	for _, content := range event.Quantities {
 		cnt++

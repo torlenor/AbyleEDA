@@ -64,7 +64,8 @@ func getServerAddress() *net.UDPAddr {
 func main() {
 	prepLogging()
 
-	sensorIDPtr := flag.Int("sensorid", 1001, "sensor id")
+	clientIDPtr := flag.Int("clientid", 1001, "sensor id")
+	sensorIDPtr := flag.Int("sensorid", 1, "sensor id")
 	sensorFilePtr := flag.String("sensorfile", "/sys/class/hwmon/hwmon0/temp2_input", "sensor file in sys interface")
 
 	flag.Parse()
@@ -80,7 +81,8 @@ func main() {
 		var t quantities.Temperature
 		t.FromFloat(val)
 
-		event := AEDAevents.EventMessage{ID: int32(*sensorIDPtr),
+		event := AEDAevents.EventMessage{ClientID: int32(*clientIDPtr),
+			EventID:    int32(*sensorIDPtr),
 			Quantities: []quantities.Quantity{&t}}
 
 		msg, err := json.Marshal(event)

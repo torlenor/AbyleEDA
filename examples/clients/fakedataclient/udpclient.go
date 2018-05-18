@@ -43,6 +43,7 @@ func main() {
 	// Command line flags parsing
 	srvAddrPtr := flag.String("srvaddr", "127.0.0.1", "server address")
 	srvPortPtr := flag.Int("port", 10001, "server port")
+	clientIDPtr := flag.Int("clientid", 2001, "client id")
 
 	flag.Parse()
 
@@ -64,7 +65,7 @@ func main() {
 		var t2 quantities.Temperature
 		t2.FromFloat(float64(mrand.Intn(250)) + mrand.Float64())
 
-		event := AEDAevents.EventMessage{ID: 1002,
+		event := AEDAevents.EventMessage{ClientID: int32(*clientIDPtr), EventID: 1002,
 			Quantities: []quantities.Quantity{&t1, &t2}}
 
 		msgng, _ := json.Marshal(event)
