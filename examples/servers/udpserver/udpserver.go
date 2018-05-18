@@ -16,6 +16,7 @@ import (
 	"github.com/torlenor/AbyleEDA/AEDAcrypt"
 	"github.com/torlenor/AbyleEDA/AEDAevents"
 	"github.com/torlenor/AbyleEDA/AEDAserver"
+	"github.com/torlenor/AbyleEDA/quantities"
 )
 
 // This is for go-logger
@@ -113,10 +114,14 @@ func webShowSensors(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("key:", k)
 		fmt.Println("val:", strings.Join(v, ""))
 	}
-	fmt.Fprintf(w, "Sensors:\n") // send data to client side
-	for k, v := range AEDAevents.M {
-		fmt.Fprintf(w, "Sensor ID: %d\n", k)      // send data to client side
-		fmt.Fprintf(w, "Value = %.2f\n", v.Value) // send data to client side
+	fmt.Fprintf(w, "<h1>Sensors</h1>")
+
+	for clientID, sensors := range sensorsMap {
+		fmt.Fprintf(w, "<h2>Client ID: %d</h2>", clientID)
+		for sensorID, sensor := range sensors {
+			fmt.Fprintf(w, "\tSensor ID: %d<br>", sensorID)
+			fmt.Fprintf(w, "\tValue = %.2f<br>", sensor.Value)
+		}
 	}
 }
 
@@ -125,6 +130,60 @@ func startWebServer() {
 	log.Info("Starting web server on port 10080")
 	http.HandleFunc("/", webShowSensors)  // set router
 	go http.ListenAndServe(":10080", nil) // set listen port
+}
+
+// Sensor struct is used to store sensor data
+type Sensor struct {
+	ID          int32
+	SensorType  string
+	Quantity    string
+	Value       float64
+	Unit        string
+	LastUpdated time.Time
+}
+
+var sensorsMap = map[int32]map[int32]Sensor{}
+
+func updateSensorValue(event AEDAevents.EventMessage) {
+	if sensorsMap[event.ClientID] == nil {
+		sensorsMap[event.ClientID] = map[int32]Sensor{}
+	}
+
+	for _, content := range event.Quantities {
+		if _, ok := sensorsMap[event.ClientID][event.EventID]; ok {
+			log.Infof("Received sensor update clientID: %d, sensorID: %d", event.ClientID, event.EventID)
+
+			switch v := content.(type) {
+			case *quantities.Temperature:
+				log.Info("Content (numeric):", v.Degrees(), "°C")
+				sensorsMap[event.ClientID][event.EventID] = Sensor{ID: event.EventID,
+					SensorType: "temperature",
+					Quantity:   v.Type(),
+					Value:      v.Degrees(),
+					Unit:       "°C"}
+			default:
+				log.Info("Content:", content.String())
+			}
+		} else {
+			log.Infof("Registering new sensor clientID: %d, sensorID: %d", event.ClientID, event.EventID)
+
+			switch v := content.(type) {
+			case *quantities.Temperature:
+				log.Info("Content (numeric):", v.Degrees(), "°C")
+				sensorsMap[event.ClientID][event.EventID] = Sensor{ID: event.EventID,
+					SensorType: "temperature",
+					Quantity:   v.Type(),
+					Value:      v.Degrees(),
+					Unit:       "°C"}
+			default:
+				log.Info("Content:", content.String())
+			}
+		}
+	}
+}
+
+func doA(i int) {
+	log.Infof("[doA]: I'm param is: %d\n", i)
 }
 
 func main() {
@@ -161,6 +220,10 @@ func main() {
 	// Server has to be set in AEDAevents to make it possible
 	// to send messages to clients in event system
 	AEDAevents.SetAEDAserver(srv)
+
+	// Register custom event callbacks
+	AEDAevents.AddCustomEvent(1001, 1, updateSensorValue)
+	AEDAevents.AddCustomEvent(1002, 1, updateSensorValue)
 
 	for {
 		select {

@@ -3,7 +3,7 @@ package AEDAevents
 import (
 	"encoding/json"
 	"errors"
-	"time"
+	"strconv"
 
 	"github.com/torlenor/AbyleEDA/quantities"
 
@@ -84,23 +84,28 @@ func (ce *EventMessage) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// Sensor struct is used to store sensor data
-type Sensor struct {
-	ID          int32
-	SensorType  string
-	Quantity    string
-	Value       float64
-	Unit        string
-	LastUpdated time.Time
+var customEventLookupMap = map[int32]map[int32]func(EventMessage){}
+
+// AddCustomEvent lets you add a new callback for a certain clientID and eventID
+func AddCustomEvent(clientID int32, eventID int32, f func(EventMessage)) {
+	if customEventLookupMap[clientID] == nil {
+		customEventLookupMap[clientID] = map[int32]func(EventMessage){}
+	}
+
+	customEventLookupMap[clientID][eventID] = f
 }
 
-// M temporarily stores Sensor data until we have a more sophisticated
-// system in place
-var M map[int32]Sensor
-
-func init() {
-	M = make(map[int32]Sensor)
+func executeCustomEvent(event EventMessage) error {
+	if cb, found := customEventLookupMap[event.ClientID][event.EventID]; found {
+		cb(event)
+	} else {
+		log.Warning("clientID: " + strconv.Itoa(int(event.ClientID)) + ", eventID: " + strconv.Itoa(int(event.EventID)) + " does not exist in custom event lookup table")
+		return errors.New("clientID: " + strconv.Itoa(int(event.ClientID)) + ", eventID: " + strconv.Itoa(int(event.EventID)) + " does not exist in custom event lookup table")
+	}
+	return nil
 }
+
+// https://play.golang.org/p/vEy-GPulXIN
 
 var myWriter AEDAserver.ServerWriter
 
@@ -110,38 +115,11 @@ func SetAEDAserver(serverWriter AEDAserver.ServerWriter) {
 	myWriter = serverWriter
 }
 
-func eventValueUpdate(event EventMessage) {
-	if _, ok := M[event.EventID]; ok {
-		log.Info("Received sensor update:")
-		printEvent(event)
-
-		// M[event.ID] = Sensor{ID: event.ID,
-		// 	SensorType: "temperature",
-		// 	Quantity:   "temperature",
-		// 	Value:      event.Value,
-		// 	Unit:       "event.Unit"}
-	} else {
-		log.Info("Registering new sensor:")
-		printEvent(event)
-
-		// M[event.ID] = Sensor{ID: event.ID,
-		// 	SensorType: "temperature",
-		// 	Quantity:   "temperature",
-		// 	Value:      event.Value,
-		// 	Unit:       "event.Unit"}
-	}
-}
-
-func eventTrigger(event EventMessage) {
-	log.Info("Received trigger event:")
-	printEvent(event)
-}
-
 // EventInterpreter should be called when a new message comes in and
 // it will be the entry point to the event handling process
 func EventInterpreter(event EventMessage) {
-	eventValueUpdate(event)
-	eventTrigger(event)
+	printEvent(event)
+	executeCustomEvent(event)
 }
 
 func printEvent(event EventMessage) {
