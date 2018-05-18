@@ -21,10 +21,15 @@ type ServerWriter interface {
 	Write(addr *net.UDPAddr, msg []byte)
 }
 
+type ServerStats interface {
+	GetServerStats() SrvStats
+}
+
 type Server interface {
 	Start()
 	Close()
 	ServerWriter
+	ServerStats
 }
 
 func parseUDPMessage(srv *UDPServer, addr *net.UDPAddr, buf []byte) {
@@ -115,6 +120,12 @@ func (srv *UDPServer) Start() error {
 	}
 
 	return errors.New("Server already running")
+}
+
+// GetServerStats returns the current stats of the server like
+// transfered packages
+func (srv *UDPServer) GetServerStats() SrvStats {
+	return srv.Stats
 }
 
 // Close closes the server and no more packages are read from UDP
