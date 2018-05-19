@@ -1,12 +1,14 @@
 package AEDAserver
 
 import (
+	"encoding/json"
 	"errors"
 	"net"
 	"strconv"
 
 	"github.com/op/go-logging"
 	"github.com/torlenor/AbyleEDA/AEDAcrypt"
+	"github.com/torlenor/AbyleEDA/eventmessage"
 )
 
 // Simple OK/NOTOK for the client
@@ -50,8 +52,14 @@ func parseUDPMessage(srv *UDPServer, addr *net.UDPAddr, buf []byte) {
 		return
 	}
 
-	srv.ResQueue <- ClientMessage{Addr: addr, Msg: msg}
-	srv.Write(addr, []byte(msgmd5))
+	var event eventmessage.EventMessage
+	if err := json.Unmarshal(msg, &event); err != nil {
+		log.Error("Error in decoding JSON:", err)
+		srv.Write(addr, rcvFAIL)
+	} else {
+		srv.ResQueue <- ClientMessage{Addr: addr, Event: event}
+		srv.Write(addr, []byte(msgmd5))
+	}
 }
 
 func appendClient(slice []net.UDPAddr, addr net.UDPAddr) []net.UDPAddr {
@@ -73,8 +81,8 @@ type SrvStats struct {
 }
 
 type ClientMessage struct {
-	Addr *net.UDPAddr
-	Msg  []byte
+	Addr  *net.UDPAddr
+	Event eventmessage.EventMessage
 }
 
 type UDPPacket struct {

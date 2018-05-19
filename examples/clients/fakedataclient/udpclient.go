@@ -12,6 +12,7 @@ import (
 	"github.com/op/go-logging"
 	"github.com/torlenor/AbyleEDA/AEDAclient"
 	"github.com/torlenor/AbyleEDA/AEDAevents"
+	"github.com/torlenor/AbyleEDA/eventmessage"
 	"github.com/torlenor/AbyleEDA/quantities"
 )
 
@@ -34,6 +35,22 @@ func prepLogging() {
 	backend := logging.NewLogBackend(os.Stdout, "", 0)
 	backendFormatter := logging.NewBackendFormatter(backend, format)
 	logging.SetBackend(backendFormatter)
+}
+
+func receiveFromServer(client *AEDAclient.UDPClient) {
+	for {
+		select {
+		// Fetch messages from AEDAclient
+		case clientMsg := <-client.ResQueue:
+			var event eventmessage.EventMessage
+			if err := json.Unmarshal(clientMsg.Msg, &event); err != nil {
+				log.Error("Error in decoding JSON:", err)
+				continue
+			}
+
+			AEDAevents.EventInterpreter(event)
+		}
+	}
 }
 
 func main() {
@@ -65,7 +82,7 @@ func main() {
 		var t2 quantities.Temperature
 		t2.FromFloat(float64(mrand.Intn(250)) + mrand.Float64())
 
-		event := AEDAevents.EventMessage{ClientID: int32(*clientIDPtr), EventID: 1,
+		event := eventmessage.EventMessage{ClientID: int32(*clientIDPtr), EventID: 1,
 			Quantities: []quantities.Quantity{&t1, &t2}}
 
 		msgng, _ := json.Marshal(event)
@@ -74,4 +91,5 @@ func main() {
 
 		time.Sleep(time.Second * 1)
 	}
+
 }

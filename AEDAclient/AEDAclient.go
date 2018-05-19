@@ -28,9 +28,14 @@ func checkError(err error) {
 type UDPClient struct {
 	DebugMode   bool
 	isConnected bool
+	isStarted   bool
 
 	Conn    *net.UDPConn
 	SrvAddr *net.UDPAddr
+
+	packetQueue chan UDPPacket
+
+	ResQueue chan ServerMessage
 
 	ccfg AEDAcrypt.CryptCfg
 }

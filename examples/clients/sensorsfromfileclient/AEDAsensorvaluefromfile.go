@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/torlenor/AbyleEDA/eventmessage"
 	"github.com/torlenor/AbyleEDA/quantities"
 
 	"github.com/op/go-logging"
 	"github.com/torlenor/AbyleEDA/AEDAclient"
-	"github.com/torlenor/AbyleEDA/AEDAevents"
 )
 
 // This is for go-logger
@@ -81,7 +81,7 @@ func main() {
 		var t quantities.Temperature
 		t.FromFloat(val)
 
-		event := AEDAevents.EventMessage{ClientID: int32(*clientIDPtr),
+		event := eventmessage.EventMessage{ClientID: int32(*clientIDPtr),
 			EventID:    int32(*sensorIDPtr),
 			Quantities: []quantities.Quantity{&t}}
 

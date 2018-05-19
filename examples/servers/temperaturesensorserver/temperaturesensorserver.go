@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/hex"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -112,20 +111,7 @@ func main() {
 		select {
 		// Fetch messages from AEDAserver
 		case clientMsg := <-srv.ResQueue:
-			var event AEDAevents.EventMessage
-			if err := json.Unmarshal(clientMsg.Msg, &event); err != nil {
-				log.Error("Error in decoding JSON:", err)
-				continue
-			}
-
-			if cfg.debugMode {
-				log.Debug(clientMsg.Addr, "sent:")
-				log.Debug(string(clientMsg.Msg))
-				log.Debug("------------------------------------------------------------")
-			}
-
-			AEDAevents.EventInterpreter(event)
-
+			AEDAevents.EventInterpreter(clientMsg.Event)
 		// or quit if os.Interrupt
 		case <-c:
 			break

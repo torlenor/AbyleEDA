@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	"github.com/torlenor/AbyleEDA/AEDAevents"
+	"github.com/torlenor/AbyleEDA/eventmessage"
 	"github.com/torlenor/AbyleEDA/quantities"
 )
 
@@ -19,7 +19,7 @@ type Sensor struct {
 
 var sensorsMap = map[int32]map[int32]Sensor{}
 
-func updateSensorValue(event AEDAevents.EventMessage) {
+func updateSensorValue(event eventmessage.EventMessage) {
 	if sensorsMap[event.ClientID] == nil {
 		sensorsMap[event.ClientID] = map[int32]Sensor{}
 	}
