@@ -3,6 +3,7 @@ package AEDAevents
 import (
 	"errors"
 	"strconv"
+	"sync"
 
 	"github.com/torlenor/AbyleEDA/eventmessage"
 	"github.com/torlenor/AbyleEDA/quantities"
@@ -14,27 +15,39 @@ import (
 var log = logging.MustGetLogger("AEDAlogger")
 
 var customEventLookupMap = map[int32]map[int32]func(eventmessage.EventMessage){}
+var customEventLookupMapMutex = &sync.Mutex{}
 
 // AddCustomEvent lets you add a new callback for a certain clientID and eventID
 func AddCustomEvent(clientID int32, eventID int32, f func(eventmessage.EventMessage)) {
+	customEventLookupMapMutex.Lock()
 	if customEventLookupMap[clientID] == nil {
 		customEventLookupMap[clientID] = map[int32]func(eventmessage.EventMessage){}
 	}
 
 	customEventLookupMap[clientID][eventID] = f
+	customEventLookupMapMutex.Unlock()
+}
+
+// RemoveCustomEvent removes a custom event callback for a certain clientID and eventID
+func RemoveCustomEvent(clientID int32, eventID int32) {
+	customEventLookupMapMutex.Lock()
+	if _, found := customEventLookupMap[clientID][eventID]; found {
+		delete(customEventLookupMap[clientID], eventID)
+	}
+	customEventLookupMapMutex.Unlock()
 }
 
 func executeCustomEvent(event eventmessage.EventMessage) error {
+	customEventLookupMapMutex.Lock()
 	if cb, found := customEventLookupMap[event.ClientID][event.EventID]; found {
 		cb(event)
 	} else {
 		log.Warning("clientID: " + strconv.Itoa(int(event.ClientID)) + ", eventID: " + strconv.Itoa(int(event.EventID)) + " does not exist in custom event lookup table")
 		return errors.New("clientID: " + strconv.Itoa(int(event.ClientID)) + ", eventID: " + strconv.Itoa(int(event.EventID)) + " does not exist in custom event lookup table")
 	}
+	customEventLookupMapMutex.Unlock()
 	return nil
 }
-
-// https://play.golang.org/p/vEy-GPulXIN
 
 var myWriter AEDAserver.ServerWriter
 
