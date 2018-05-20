@@ -8,6 +8,7 @@ import (
 	"os/signal"
 
 	"github.com/op/go-logging"
+
 	"github.com/torlenor/AbyleEDA/AEDAcrypt"
 	"github.com/torlenor/AbyleEDA/AEDAevents"
 	"github.com/torlenor/AbyleEDA/AEDAserver"
@@ -66,6 +67,14 @@ func prepLogging() {
 	logging.SetBackend(backendFormatter)
 }
 
+func setupEvents() {
+	// Register custom event callbacks with the events system
+	AEDAevents.AddCustomEvent(1001, 1, updateSensorValue)
+	AEDAevents.AddCustomEvent(1002, 1, updateSensorValue)
+	AEDAevents.AddCustomEvent(1005, 1, updateSensorValue)
+	AEDAevents.AddCustomEvent(1005, 2, updateSensorValue)
+}
+
 func main() {
 	// Prepare logging with go-logging
 	prepLogging()
@@ -101,11 +110,8 @@ func main() {
 	// to send messages to clients in event system
 	AEDAevents.SetAEDAserver(srv)
 
-	// Register custom event callbacks
-	AEDAevents.AddCustomEvent(1001, 1, updateSensorValue)
-	AEDAevents.AddCustomEvent(1002, 1, updateSensorValue)
-	AEDAevents.AddCustomEvent(1005, 1, updateSensorValue)
-	AEDAevents.AddCustomEvent(1005, 2, updateSensorValue)
+	// Setup custom event callbacks
+	setupEvents()
 
 	for {
 		select {
