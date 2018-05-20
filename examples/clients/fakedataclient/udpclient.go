@@ -82,7 +82,8 @@ func main() {
 		var t2 quantities.Temperature
 		t2.FromFloat(float64(mrand.Intn(250)) + mrand.Float64())
 
-		event := eventmessage.EventMessage{ClientID: int32(*clientIDPtr), EventID: 1,
+		event := eventmessage.EventMessage{ClientID: int32(*clientIDPtr),
+			EventID:    1,
 			Quantities: []quantities.Quantity{&t1, &t2}}
 
 		AEDAclient.SendMessageToServer(client, event)

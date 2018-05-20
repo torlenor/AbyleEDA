@@ -116,6 +116,9 @@ func DisconnectUDPClient(client *UDPClient) {
 
 // SendMessageToServer sends a message to the connected server
 func SendMessageToServer(client *UDPClient, event eventmessage.EventMessage) {
+	// Set the current timestamp
+	event.Timestamp = time.Now().UnixNano()
+
 	msg, err := json.Marshal(event)
 	checkError(err)
 

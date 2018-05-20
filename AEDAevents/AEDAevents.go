@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/torlenor/AbyleEDA/eventmessage"
 	"github.com/torlenor/AbyleEDA/quantities"
@@ -68,6 +69,7 @@ func EventInterpreter(event eventmessage.EventMessage) {
 func printEvent(event eventmessage.EventMessage) {
 	log.Info("ClientID =", event.ClientID)
 	log.Info("EventID =", event.EventID)
+	log.Info("Timestamp =", event.Timestamp, "(", time.Unix(0, event.Timestamp), ")")
 	cnt := 0
 	for _, content := range event.Quantities {
 		cnt++

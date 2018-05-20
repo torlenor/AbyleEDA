@@ -11,6 +11,7 @@ import (
 type EventMessage struct {
 	ClientID   int32                 `json:"clientid"`
 	EventID    int32                 `json:"eventid"`
+	Timestamp  int64                 `json:"timestamp"`
 	Quantities []quantities.Quantity `json:"quantities"`
 }
 
@@ -42,6 +43,17 @@ func (ce *EventMessage) UnmarshalJSON(b []byte) error {
 		ce.EventID = eventidval
 	} else {
 		return errors.New("clientid does not exist in json data")
+	}
+
+	if value, found := objMap["timestamp"]; found {
+		var timestampval int64
+		err = json.Unmarshal(*value, &timestampval)
+		if err != nil {
+			return err
+		}
+		ce.Timestamp = timestampval
+	} else {
+		return errors.New("timestamp does not exist in json data")
 	}
 
 	var rawMessagesForEventMessage []*json.RawMessage
