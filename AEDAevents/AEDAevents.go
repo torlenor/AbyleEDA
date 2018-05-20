@@ -43,6 +43,7 @@ func executeCustomEvent(event eventmessage.EventMessage) error {
 		cb(event)
 	} else {
 		log.Warning("clientID: " + strconv.Itoa(int(event.ClientID)) + ", eventID: " + strconv.Itoa(int(event.EventID)) + " does not exist in custom event lookup table")
+		customEventLookupMapMutex.Unlock()
 		return errors.New("clientID: " + strconv.Itoa(int(event.ClientID)) + ", eventID: " + strconv.Itoa(int(event.EventID)) + " does not exist in custom event lookup table")
 	}
 	customEventLookupMapMutex.Unlock()
