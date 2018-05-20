@@ -85,9 +85,7 @@ func main() {
 		event := eventmessage.EventMessage{ClientID: int32(*clientIDPtr), EventID: 1,
 			Quantities: []quantities.Quantity{&t1, &t2}}
 
-		msgng, _ := json.Marshal(event)
-
-		AEDAclient.SendMessageToServer(client, msgng)
+		AEDAclient.SendMessageToServer(client, event)
 
 		time.Sleep(time.Second * 1)
 	}

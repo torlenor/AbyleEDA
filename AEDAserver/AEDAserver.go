@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/op/go-logging"
+
 	"github.com/torlenor/AbyleEDA/AEDAcrypt"
 	"github.com/torlenor/AbyleEDA/eventmessage"
 )

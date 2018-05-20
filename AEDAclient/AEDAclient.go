@@ -3,6 +3,7 @@ package AEDAclient
 import (
 	"bufio"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"net"
 	"os"
@@ -10,7 +11,9 @@ import (
 	"time"
 
 	"github.com/op/go-logging"
+
 	"github.com/torlenor/AbyleEDA/AEDAcrypt"
+	"github.com/torlenor/AbyleEDA/eventmessage"
 )
 
 var log = logging.MustGetLogger("AEDAlogger")
@@ -112,7 +115,10 @@ func DisconnectUDPClient(client *UDPClient) {
 }
 
 // SendMessageToServer sends a message to the connected server
-func SendMessageToServer(client *UDPClient, msg []byte) {
+func SendMessageToServer(client *UDPClient, event eventmessage.EventMessage) {
+	msg, err := json.Marshal(event)
+	checkError(err)
+
 	// Encrypt the message
 	encmsg := AEDAcrypt.Encrypter(msg, client.ccfg)
 

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"io/ioutil"
 	"net"
@@ -10,11 +9,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/op/go-logging"
+
+	"github.com/torlenor/AbyleEDA/AEDAclient"
 	"github.com/torlenor/AbyleEDA/eventmessage"
 	"github.com/torlenor/AbyleEDA/quantities"
-
-	"github.com/op/go-logging"
-	"github.com/torlenor/AbyleEDA/AEDAclient"
 )
 
 // This is for go-logger
@@ -86,10 +85,7 @@ func main() {
 			EventID:    int32(*sensorIDPtr),
 			Quantities: []quantities.Quantity{&t}}
 
-		msg, err := json.Marshal(event)
-		checkError(err)
-
-		AEDAclient.SendMessageToServer(client, msg)
+		AEDAclient.SendMessageToServer(client, event)
 
 		time.Sleep(time.Millisecond * time.Duration(*updateIntervalPtr*1000))
 	}
