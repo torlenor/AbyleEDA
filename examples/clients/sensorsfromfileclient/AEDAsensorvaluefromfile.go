@@ -67,6 +67,7 @@ func main() {
 	clientIDPtr := flag.Int("clientid", 1001, "sensor id")
 	sensorIDPtr := flag.Int("sensorid", 1, "sensor id")
 	sensorFilePtr := flag.String("sensorfile", "/sys/class/hwmon/hwmon0/temp2_input", "sensor file in sys interface")
+	updateIntervalPtr := flag.Float64("updateInterval", 1, "Update Interval for the sensor data in seconds")
 
 	flag.Parse()
 
@@ -90,6 +91,6 @@ func main() {
 
 		AEDAclient.SendMessageToServer(client, msg)
 
-		time.Sleep(time.Second * 1)
+		time.Sleep(time.Millisecond * time.Duration(*updateIntervalPtr*1000))
 	}
 }
