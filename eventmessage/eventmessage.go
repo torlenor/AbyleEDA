@@ -42,7 +42,7 @@ func (ce *EventMessage) UnmarshalJSON(b []byte) error {
 		}
 		ce.EventID = eventidval
 	} else {
-		return errors.New("clientid does not exist in json data")
+		return errors.New("eventid does not exist in json data")
 	}
 
 	if value, found := objMap["timestamp"]; found {
@@ -65,7 +65,7 @@ func (ce *EventMessage) UnmarshalJSON(b []byte) error {
 		}
 		ce.Quantities = make([]quantities.Quantity, len(rawMessagesForEventMessage))
 	} else {
-		return errors.New("clientid does not exist in json data")
+		return errors.New("quantities does not exist in json data")
 	}
 
 	var m map[string]string
@@ -82,6 +82,13 @@ func (ce *EventMessage) UnmarshalJSON(b []byte) error {
 				return err
 			}
 			ce.Quantities[index] = &t
+		} else if m["type"] == "ping" {
+			var p quantities.Ping
+			err := json.Unmarshal(*rawMessage, &p)
+			if err != nil {
+				return err
+			}
+			ce.Quantities[index] = &p
 		} else {
 			return errors.New("unsupported type found: " + m["type"])
 		}
