@@ -79,9 +79,16 @@ func printEvent(event eventmessage.EventMessage) {
 
 		switch v := content.(type) {
 		case *quantities.Ping:
-			log.Info("Content (", v.Type(), ")", cnt, ": Hostname =", v.HostName,
-				"IPAddr =", v.IPAddr,
-				"ResponseTime = ", v.ResponseTime)
+			log.Info("Ping host results:",
+				"\n\tHostname =", v.HostName,
+				"\n\tIPAddr =", v.IPAddr,
+				"\n\tpacketsrecv =", v.PacketsRecv,
+				"\n\tpacketssent =", v.PacketsSent,
+				"\n\tminrtt =", v.MinRtt,
+				"\n\tmaxrtt =", v.MaxRtt,
+				"\n\tavgrtt =", v.AvgRtt,
+				"\n\tstddevrtt =", v.StdDevRtt,
+			)
 		default:
 			log.Info("Content (", v.Type(), ")", cnt, ":", content.String())
 		}

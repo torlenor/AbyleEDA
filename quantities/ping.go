@@ -8,10 +8,14 @@ import (
 
 // Ping quantity
 type Ping struct {
-	HostName     string
-	IPAddr       string
-	DidAnswer    bool
-	ResponseTime time.Duration
+	HostName    string
+	IPAddr      string
+	PacketsRecv int64
+	PacketsSent int64
+	MinRtt      time.Duration
+	MaxRtt      time.Duration
+	AvgRtt      time.Duration
+	StdDevRtt   time.Duration
 }
 
 // Type returns the type of the quantity
@@ -21,11 +25,15 @@ func (p *Ping) Type() string {
 
 func (p *Ping) MarshalJSON() (b []byte, e error) {
 	return json.Marshal(map[string]string{
-		"type":         p.Type(),
-		"hostname":     p.HostName,
-		"ipaddr":       p.IPAddr,
-		"didanswer":    strconv.FormatBool(p.DidAnswer),
-		"responsetime": p.ResponseTime.String(),
+		"type":        p.Type(),
+		"hostname":    p.HostName,
+		"ipaddr":      p.IPAddr,
+		"packetsrecv": strconv.FormatInt(p.PacketsRecv, 10),
+		"packetssent": strconv.FormatInt(p.PacketsSent, 10),
+		"minrtt":      p.MinRtt.String(),
+		"maxrtt":      p.MaxRtt.String(),
+		"avgrtt":      p.AvgRtt.String(),
+		"stddevrtt":   p.StdDevRtt.String(),
 	})
 }
 
@@ -43,19 +51,53 @@ func (p *Ping) UnmarshalJSON(b []byte) error {
 		if key == "ipaddr" {
 			p.IPAddr = value
 		}
-		if key == "didanswer" {
-			didAnswer, err := strconv.ParseBool(value)
-			if err != nil {
-				return err
-			}
-			p.DidAnswer = didAnswer
+		if key == "ipaddr" {
+			p.IPAddr = value
 		}
-		if key == "responsetime" {
-			responseTime, err := time.ParseDuration(value)
+
+		if key == "packetsrecv" {
+			packetsRecv, err := strconv.ParseInt(value, 10, 64)
 			if err != nil {
 				return err
 			}
-			p.ResponseTime = responseTime
+			p.PacketsRecv = packetsRecv
+		}
+
+		if key == "packetssent" {
+			packetsSent, err := strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				return err
+			}
+			p.PacketsSent = packetsSent
+		}
+
+		if key == "minrtt" {
+			minRtt, err := time.ParseDuration(value)
+			if err != nil {
+				return err
+			}
+			p.MinRtt = minRtt
+		}
+		if key == "maxrtt" {
+			maxRtt, err := time.ParseDuration(value)
+			if err != nil {
+				return err
+			}
+			p.MaxRtt = maxRtt
+		}
+		if key == "avgrtt" {
+			avgRtt, err := time.ParseDuration(value)
+			if err != nil {
+				return err
+			}
+			p.AvgRtt = avgRtt
+		}
+		if key == "stddevrtt" {
+			stdDevRtt, err := time.ParseDuration(value)
+			if err != nil {
+				return err
+			}
+			p.StdDevRtt = stdDevRtt
 		}
 	}
 
@@ -64,7 +106,7 @@ func (p *Ping) UnmarshalJSON(b []byte) error {
 
 // String returns the value as a string
 func (p *Ping) String() string {
-	return p.ResponseTime.String()
+	return p.AvgRtt.String()
 }
 
 // FromString converts a provided numerical value as a string into
@@ -72,6 +114,6 @@ func (p *Ping) String() string {
 func (p *Ping) FromString(valstr string) {
 	f, err := time.ParseDuration(valstr)
 	if err == nil {
-		p.ResponseTime = f
+		p.AvgRtt = f
 	}
 }

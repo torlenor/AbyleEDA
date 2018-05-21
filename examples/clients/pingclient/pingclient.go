@@ -2,11 +2,14 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	mrand "math/rand"
 	"net"
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -44,8 +47,16 @@ func main() {
 	srvAddrPtr := flag.String("srvaddr", "127.0.0.1", "server address")
 	srvPortPtr := flag.Int("port", 10002, "server port")
 	clientIDPtr := flag.Int("clientid", 3001, "client id")
+	pingCountPtr := flag.Int("pingcount", 3, "number of pings per iteration")
+	hostsPtr := flag.String("hosts", "", "hosts separated by , (comma)")
+	waitBetweenPingsPtr := flag.Float64("waitInterval", 1, "Wait between ping iterations")
 
 	flag.Parse()
+
+	if len(*hostsPtr) == 0 {
+		fmt.Printf("Please specifiy hosts to ping with -hosts flag\n")
+		os.Exit(1)
+	}
 
 	mrand.Seed(time.Now().UnixNano())
 
@@ -58,11 +69,8 @@ func main() {
 	checkError(err)
 	defer AEDAclient.DisconnectUDPClient(client)
 
-	urls := []string{
-		"www.orf.at",
-		"www.kernel.org",
-		"www.heise.de",
-	}
+	hostUrls := strings.Replace(*hostsPtr, " ", "", -1)
+	urls := strings.Split(hostUrls, ",")
 
 	signalChannel := make(chan os.Signal, 2)
 	signal.Notify(signalChannel, os.Interrupt, syscall.SIGINT)
@@ -76,7 +84,8 @@ func main() {
 		}
 	}()
 
-	// pingResponses := make(chan *ping.Statistics)
+	var mutex = &sync.Mutex{}
+	var wg sync.WaitGroup
 
 	for {
 		event := eventmessage.EventMessage{ClientID: int32(*clientIDPtr),
@@ -84,56 +93,42 @@ func main() {
 			Quantities: []quantities.Quantity{},
 		}
 
-		// var wg sync.WaitGroup
-
 		checkError(err)
 
-		// for _, url := range urls {
-		// 	wg.Add(1)
-		// 	go func(url string) {
-		// 		defer wg.Done()
-		// 		fmt.Printf(url + "\n")
-		// 		stats, err := pingHost(url)
-		// 		fmt.Printf("done")
-		// 		if err != nil {
-		// 			log.Error(err)
-		// 		} else {
-		// 			pingResponses <- stats
-		// 		}
-		// 	}(url)
-		// }
-
-		// go func() {
-		// 	for stat := range pingResponses {
-		// 		var pingResults quantities.Ping
-		// 		pingResults.DidAnswer = true
-		// 		pingResults.ResponseTime = stat.AvgRtt
-		// 		pingResults.HostName = stat.Addr
-		// 		pingResults.IPAddr = stat.IPAddr.String()
-		// 		event.Quantities = append(event.Quantities, &pingResults)
-		// 	}
-		// }()
-
-		// wg.Wait()
-
+		wg.Add(len(urls))
 		for _, url := range urls {
-			// wg.Add(1)
-			stats, err := pingHost(url)
-			if err != nil {
-				log.Error(err)
-			} else {
-				var pingResults quantities.Ping
-				pingResults.DidAnswer = true
-				pingResults.ResponseTime = stats.AvgRtt
-				pingResults.HostName = stats.Addr
-				pingResults.IPAddr = stats.IPAddr.String()
-				event.Quantities = append(event.Quantities, &pingResults)
-			}
+			go func(url string) {
+				defer wg.Done()
+				stats, err := pingHost(url, *pingCountPtr)
+				if err != nil {
+					log.Error(err)
+					var pingResults quantities.Ping
+					pingResults.HostName = url
+					mutex.Lock()
+					event.Quantities = append(event.Quantities, &pingResults)
+					mutex.Unlock()
+				} else {
+					var pingResults quantities.Ping
+					pingResults.HostName = stats.Addr
+					pingResults.IPAddr = stats.IPAddr.String()
+					pingResults.PacketsRecv = int64(stats.PacketsRecv)
+					pingResults.PacketsSent = int64(stats.PacketsSent)
+					pingResults.MinRtt = stats.MinRtt
+					pingResults.MaxRtt = stats.MaxRtt
+					pingResults.AvgRtt = stats.AvgRtt
+					pingResults.StdDevRtt = stats.StdDevRtt
+					mutex.Lock()
+					event.Quantities = append(event.Quantities, &pingResults)
+					mutex.Unlock()
+				}
+			}(url)
 		}
+
+		wg.Wait()
 
 		AEDAclient.SendMessageToServer(client, event)
 
-		time.Sleep(time.Second * 1)
+		time.Sleep(time.Millisecond * time.Duration(*waitBetweenPingsPtr*1000))
 	}
 
 }
