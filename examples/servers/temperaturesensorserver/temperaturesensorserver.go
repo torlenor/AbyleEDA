@@ -6,12 +6,15 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/op/go-logging"
 
 	"github.com/torlenor/AbyleEDA/AEDAcrypt"
 	"github.com/torlenor/AbyleEDA/AEDAevents"
 	"github.com/torlenor/AbyleEDA/AEDAserver"
+	"github.com/torlenor/AbyleEDA/eventmessage"
+	"github.com/torlenor/AbyleEDA/quantities"
 )
 
 // This is for go-logger
@@ -75,6 +78,23 @@ func setupEvents() {
 	AEDAevents.AddCustomEvent(1005, 2, updateSensorValue)
 }
 
+func printEvent(event eventmessage.EventMessage) {
+	log.Info("ClientID =", event.ClientID)
+	log.Info("EventID =", event.EventID)
+	log.Info("Timestamp =", event.Timestamp, "(", time.Unix(0, event.Timestamp), ")")
+	cnt := 0
+	for _, content := range event.Quantities {
+		cnt++
+
+		switch v := content.(type) {
+		case *quantities.Temperature:
+			log.Info("Content (", v.Type(), ")", cnt, ":", v.Degrees(), "°C")
+		default:
+			log.Info("Content (", v.Type(), ")", cnt, ":", content.String())
+		}
+	}
+}
+
 func main() {
 	// Prepare logging with go-logging
 	prepLogging()
@@ -117,6 +137,7 @@ func main() {
 		select {
 		// Fetch messages from AEDAserver
 		case clientMsg := <-srv.ResQueue:
+			printEvent(clientMsg.Event)
 			AEDAevents.EventInterpreter(clientMsg.Event)
 		// or quit if os.Interrupt
 		case <-c:

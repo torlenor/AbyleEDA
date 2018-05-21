@@ -4,10 +4,8 @@ import (
 	"errors"
 	"strconv"
 	"sync"
-	"time"
 
 	"github.com/torlenor/AbyleEDA/eventmessage"
-	"github.com/torlenor/AbyleEDA/quantities"
 
 	"github.com/op/go-logging"
 	"github.com/torlenor/AbyleEDA/AEDAserver"
@@ -62,23 +60,5 @@ func SetAEDAserver(serverWriter AEDAserver.ServerWriter) {
 // EventInterpreter should be called when a new message comes in and
 // it will be the entry point to the event handling process
 func EventInterpreter(event eventmessage.EventMessage) {
-	printEvent(event)
 	executeCustomEvent(event)
-}
-
-func printEvent(event eventmessage.EventMessage) {
-	log.Info("ClientID =", event.ClientID)
-	log.Info("EventID =", event.EventID)
-	log.Info("Timestamp =", event.Timestamp, "(", time.Unix(0, event.Timestamp), ")")
-	cnt := 0
-	for _, content := range event.Quantities {
-		cnt++
-
-		switch v := content.(type) {
-		case *quantities.Temperature:
-			log.Info("Content (numeric)", cnt, ":", v.Degrees(), "°C")
-		default:
-			log.Info("Content", cnt, ":", content.String())
-		}
-	}
 }

@@ -123,7 +123,8 @@ func SendMessageToServer(client *UDPClient, event eventmessage.EventMessage) {
 	checkError(err)
 
 	// Encrypt the message
-	encmsg := AEDAcrypt.Encrypter(msg, client.ccfg)
+	encmsg, err := AEDAcrypt.Encrypter(msg, client.ccfg)
+	checkError(err)
 
 	buf := []byte(encmsg)
 	msgmd5 := AEDAcrypt.GetMD5HashFromString(string(buf))

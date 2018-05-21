@@ -18,22 +18,24 @@ type CryptCfg struct {
 
 var ccfg CryptCfg
 
-func Encrypter(encmsg []byte, ccfg CryptCfg) []byte {
+func Encrypter(encmsg []byte, ccfg CryptCfg) ([]byte, error) {
 	plaintext := encmsg
 
 	block, err := aes.NewCipher(ccfg.Key)
 	if err != nil {
-		panic(err.Error())
+		log.Error(err.Error())
+		return nil, err
 	}
 
 	aesgcm, err := cipher.NewGCM(block)
 	if err != nil {
-		panic(err.Error())
+		log.Error(err.Error())
+		return nil, err
 	}
 
 	ciphertext := aesgcm.Seal(nil, ccfg.Nonce, plaintext, nil)
 
-	return ciphertext
+	return ciphertext, nil
 }
 
 func Decrypter(cryptmsg []byte, ccfg CryptCfg) ([]byte, error) {
@@ -59,15 +61,15 @@ func Decrypter(cryptmsg []byte, ccfg CryptCfg) ([]byte, error) {
 }
 
 func GetMD5HashFromString(text string) string {
-    return getMD5Hash([]byte(text))
+	return getMD5Hash([]byte(text))
 }
 
 func GetMD5HashFromByte(by []byte) string {
-    return getMD5Hash(by)
+	return getMD5Hash(by)
 }
 
 func getMD5Hash(by []byte) string {
-    hasher := md5.New()
-    hasher.Write(by)
-    return hex.EncodeToString(hasher.Sum(nil))
+	hasher := md5.New()
+	hasher.Write(by)
+	return hex.EncodeToString(hasher.Sum(nil))
 }
