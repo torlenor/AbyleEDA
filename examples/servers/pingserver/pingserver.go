@@ -42,9 +42,10 @@ func initInterruptHandling(srv *AEDAserver.UDPServer) {
 }
 
 type config struct {
-	debugMode bool
-	port      int
-	ccfg      AEDAcrypt.CryptCfg
+	debugMode     bool
+	port          int
+	ccfg          AEDAcrypt.CryptCfg
+	templatesPath string
 }
 
 var cfg config
@@ -52,8 +53,11 @@ var cfg config
 func parseCmdLine() {
 	numbPtr := flag.Int("port", 10002, "server port to listen on")
 	boolPtr := flag.Bool("debug", false, "debug output")
+	templatesPathPtr := flag.String("templates", "~/templates", "path to the html templates")
 
 	flag.Parse()
+
+	cfg.templatesPath = *templatesPathPtr
 
 	cfg.debugMode = *boolPtr
 	cfg.port = *numbPtr
@@ -95,6 +99,18 @@ func printEvent(event eventmessage.EventMessage) {
 	}
 }
 
+func updateHostsData(event eventmessage.EventMessage) {
+	for _, content := range event.Quantities {
+		switch v := content.(type) {
+		case *quantities.Ping:
+			hostsMap[v.HostName] = *v
+		default:
+		}
+	}
+}
+
+var hostsMap = map[string]quantities.Ping{}
+
 func main() {
 	// Prepare logging with go-logging
 	prepLogging()
@@ -131,6 +147,7 @@ func main() {
 		// Fetch messages from AEDAserver
 		case clientMsg := <-srv.ResQueue:
 			printEvent(clientMsg.Event)
+			updateHostsData(clientMsg.Event)
 		// or quit if os.Interrupt
 		case <-c:
 			break

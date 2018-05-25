@@ -1,10 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"html/template"
 	"net/http"
-	"strings"
 )
 
 type page struct {
@@ -13,22 +11,33 @@ type page struct {
 }
 
 func viewHandler(w http.ResponseWriter, r *http.Request) {
-	p := page{Title: "Hello world"}
-	t, _ := template.ParseFiles("sensor.html")
-	t.Execute(w, p)
+	tmpl := template.Must(template.ParseFiles(cfg.templatesPath + "/hoststatistics.html"))
+
+	data := TodoPageData{
+		PageTitle: "My TODO list",
+		Todos: []Todo{
+			{Title: "Task 1", Done: false},
+			{Title: "Task 2", Done: true},
+			{Title: "Task 3", Done: true},
+		},
+	}
+	tmpl.Execute(w, data)
 }
 
-func webShowSensors(w http.ResponseWriter, r *http.Request) {
-	for k, v := range r.Form {
-		fmt.Println("key:", k)
-		fmt.Println("val:", strings.Join(v, ""))
-	}
-	fmt.Fprintf(w, "<h1>Sensors</h1>")
+type Todo struct {
+	Title string
+	Done  bool
+}
+
+type TodoPageData struct {
+	PageTitle string
+	Todos     []Todo
 }
 
 func startWebServer() {
 	// Setup simple web server
 	log.Info("Starting web server on port 10081")
-	http.HandleFunc("/", webShowSensors)  // set router
+	http.HandleFunc("/", viewHandler)
+
 	go http.ListenAndServe(":10081", nil) // set listen port
 }
