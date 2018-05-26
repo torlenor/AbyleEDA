@@ -2,7 +2,6 @@ package AEDAclient
 
 import (
 	"bufio"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -71,17 +70,13 @@ func greetServer(Conn *net.UDPConn) error {
 	return nil
 }
 
-func authenticateClient(Conn *net.UDPConn) (AEDAcrypt.CryptCfg, error) {
-	// TODO: Do an authentication
-	nonce, _ := hex.DecodeString("bb8ef84243d2ee95a41c6c57")
-
-	ccfg := AEDAcrypt.CryptCfg{Key: []byte("AES256Key-32Characters1234567890"),
-		Nonce: nonce}
-	return ccfg, nil
+func authenticateClient(Conn *net.UDPConn) error {
+	// TODO: Perform an authentication
+	return nil
 }
 
 // ConnectUDPClient function connects a client to a server
-func ConnectUDPClient(srvAddr *net.UDPAddr) (*UDPClient, error) {
+func ConnectUDPClient(srvAddr *net.UDPAddr, ccfg AEDAcrypt.CryptCfg) (*UDPClient, error) {
 	client := &UDPClient{}
 
 	// Define the server address and port
@@ -97,7 +92,7 @@ func ConnectUDPClient(srvAddr *net.UDPAddr) (*UDPClient, error) {
 		return nil, err
 	}
 
-	ccfg, err := authenticateClient(Conn)
+	err = authenticateClient(Conn)
 	if err != nil {
 		return nil, err
 	}

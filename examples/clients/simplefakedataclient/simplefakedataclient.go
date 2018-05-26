@@ -73,7 +73,7 @@ func main() {
 	serverAddr, err := net.ResolveUDPAddr("udp", cfg.srvaddr+":"+strconv.Itoa(cfg.srvport))
 	checkError(err)
 
-	client, err := AEDAclient.ConnectUDPClient(serverAddr)
+	client, err := AEDAclient.ConnectUDPClient(serverAddr, cfg.ccfg)
 	checkError(err)
 	defer AEDAclient.DisconnectUDPClient(client)
 

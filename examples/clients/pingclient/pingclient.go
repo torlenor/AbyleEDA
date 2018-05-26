@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/hex"
 	"flag"
 	"fmt"
 	mrand "math/rand"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/op/go-logging"
 	"github.com/torlenor/AbyleEDA/AEDAclient"
+	"github.com/torlenor/AbyleEDA/AEDAcrypt"
 	"github.com/torlenor/AbyleEDA/eventmessage"
 	"github.com/torlenor/AbyleEDA/quantities"
 )
@@ -65,7 +67,10 @@ func main() {
 	ServerAddr, err := net.ResolveUDPAddr("udp", *srvAddrPtr+":"+srvPort)
 	checkError(err)
 
-	client, err := AEDAclient.ConnectUDPClient(ServerAddr)
+	nonce, _ := hex.DecodeString("bb8ef84243d2ee95a41c6c57")
+	ccfg := AEDAcrypt.CryptCfg{Key: []byte("AES256Key-32Characters1234567890"),
+		Nonce: nonce}
+	client, err := AEDAclient.ConnectUDPClient(ServerAddr, ccfg)
 	checkError(err)
 	defer AEDAclient.DisconnectUDPClient(client)
 
