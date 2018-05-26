@@ -89,6 +89,13 @@ func (ce *EventMessage) UnmarshalJSON(b []byte) error {
 				return err
 			}
 			ce.Quantities[index] = &p
+		} else if m["type"] == "floating" {
+			var p quantities.Floating
+			err := json.Unmarshal(*rawMessage, &p)
+			if err != nil {
+				return err
+			}
+			ce.Quantities[index] = &p
 		} else {
 			return errors.New("unsupported type found: " + m["type"])
 		}
