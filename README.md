@@ -1,17 +1,16 @@
 # AbyleEDA
-This is AbyleEDA, the Abyle Event Driven Automation programming suite.
-It consists of client/server architecture to send events, which can be sensor values, 
-images, switch states, over the network to a server which handles the events by 
-either showing them or activating other events. The event graph will be customizable
-by a config file (probably xml based). We will provide examples (some of them exist already)
-on how to implement a server or a client based on AbyleEDA.
 
-Working already is sending event messages from a client to a server via UDP, which are encrypted, 
-hashed JSON packages. As an example we provide a fakedata client which generates fake data 
-and sends it to a server, a simple client which reads temperature data from a sensors file
-(e.g., /sys/class/hwmon/hwmon0/temp2_input) and the server which receives the data,
-prints the events to stdout and can also spawn a webserver to show the values received
-for sensor events.
+## Description
+
+This is AbyleEDA, the Abyle Event Driven Automation programming suite.
+
+It is based on a client/server architecture to send events, which can be floating point numbers, sensor values, switch states, etc., over the network. The server handles the events by either showing them or triggering other events.
+
+The event graph will be customizable and examples on how to use it will be provided. At the moment the event system can be used to call a custom callback function based on client and event ID.
+
+The data is transmitted as encrypted (AES256) JSON packages over UDP. In the feature it is planed to support also TCP and maybe other encryptions.
+
+## How to download/install
 
 Make sure your $GOPATH is set.
 
@@ -23,8 +22,22 @@ Checkout all dependencies
 
     go get -v ./...
 
-Build all binaries (udpserver, udpclient at the moment) with
+Build all examples with
 
     go install ./.../AbyleEDA/...
 
-The binaries should land in $GOPATH/bin
+The binaries will land in $GOPATH/bin
+
+## Examples
+
+### simplefakedataserver/simplefakedataclient
+
+These examples demonstrate the simplest way to setup a server and a client, send floating point events from client to server and how to setup the custom event callback of the AEDAevents system.
+
+### temperaturesensorserver/temperaturesensorclient
+
+The client sends temperature sensor data read from a file, e.g., /sys/class/hwmon/hwmon0/temp2_input, to a server which provides a simple webserver to show the data (webserver and templates are work in progress).
+
+### pingserver/pingclient
+
+On client start hosts to ping and the ping interval can be specified. Those hosts are pinged using github.com/SewanDevs/go-ping and sent to a server which will, at some point in the future, provide a web interface to the results (work in progress).
